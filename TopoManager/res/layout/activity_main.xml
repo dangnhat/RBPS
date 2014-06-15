@@ -1,0 +1,79 @@
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="dhbk.android.topomanager.MainActivity"
+    tools:ignore="MergeRootFrame" >
+
+    <ListView
+        android:id="@+id/viewTopo"
+        android:layout_width="match_parent"
+        android:layout_height="200dp" >
+
+    </ListView>
+
+    <ScrollView
+        android:id="@+id/scrollViewDetails"
+        android:layout_width="match_parent"
+        android:layout_height="fill_parent"
+        android:layout_weight="1" >
+
+        <TextView
+            android:id="@+id/viewDetails"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    </ScrollView>
+
+    <TableLayout
+        android:id="@+id/TableLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/background"
+        android:stretchColumns="3"
+        android:layout_gravity="fill_horizontal" >
+
+        <TableRow
+            android:id="@+id/tableRow"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_weight="1" >
+
+            <Button
+                android:id="@+id/btnScan"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal|center_vertical"
+                android:layout_weight="1"
+                android:drawableLeft="@drawable/scan"
+                android:onClick="scanTopo"
+                android:text="Scan" />
+
+            <Button
+                android:id="@+id/btnMeasure"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal|center_vertical"
+                android:onClick="measure"
+                android:drawableLeft="@drawable/heart"
+                android:layout_weight="1"
+                android:text="Measure" />
+
+            <Button
+                android:id="@+id/btnDetail"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal|center_vertical"
+                android:onClick="detailNode"
+                android:drawableLeft="@drawable/detail"
+                android:layout_weight="1"
+                android:text="Detail" />
+
+        </TableRow>
+
+    </TableLayout>
+
+</TableLayout>

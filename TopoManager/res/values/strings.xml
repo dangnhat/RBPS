@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">TopoManager</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_database">Database</string>
+    <string name="action_schedule">Schedule</string>
+    <string name="action_setIp">Server IP</string>
+    <string name="action_about">About us</string>
+
+</resources>
