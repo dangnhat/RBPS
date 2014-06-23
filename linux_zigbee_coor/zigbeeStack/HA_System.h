@@ -12,7 +12,6 @@
 /**< includes */
 #include "CC2530ZNP.h"
 #include "ZigbeeStack.h"
-#include "HA_Flash.h"
 #include "HA_Glb.h"
 
 /**<-------------- Global vars and objects in the HA_system ------------*/
@@ -22,9 +21,6 @@ extern CC2530ZNP HA_ZNP;
 
 /**< ZbStack */
 extern ZbStack HA_ZbStack;
-
-/**< HA_flash */
-extern HA_flash HA_aFlash;
 
 
 /**<-------------- Global vars and objects in the HA_system ------------*/

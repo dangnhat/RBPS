@@ -8,76 +8,144 @@
 
 #include <iostream>
 #include <unistd.h>
+#include <stdint.h>
 #include "rs232.h"
+#include "misc.h"
+#include "HA_System.h"
+
 using namespace std;
 
-const int CTS_ACTIVE_STATE = 1;
-const int RX_BUF_SIZE = 1024;
-
-bool checkFCS(unsigned char *rx_buf, int size);
-
 int main() {
-    int comport_num = 17; //ttyUSB1
-    unsigned char rxBuf[RX_BUF_SIZE];
-    int rx_count;
+	char usr_cmd[1024];
+	int num_node_rep;
+	uint16_t node_add[2];
+	uint32_t count;
+	uint32_t count2;
 
-    int count;
-    bool isNeedToGetData;
-    int old_cts_state, new_cts_state;
+    ZbStack_ns::Zb_callbackType_t callbackType;
+    ZbStack_ns::Zb_startConfirmStatus_t startConfirmStatus;
+    ZbStack_ns::Zb_dataStruct_s aDataStruct_s;
 
-    /* Test comport */
-    if (RS232_OpenComport(comport_num, 115200) == -1){
-        cout << "Cannot open comport ttyUSB1\n";
-        return -1;
-    }
+    printf("Starting CC2530ZNP...\n");
 
-    /* receive chars when CTS is set*/
-    isNeedToGetData = false;
+	HA_system_init();
 
-    RS232_enableRTS(comport_num);
-    printf("Enabled RTS pin\n");
-    
-    old_cts_state = RS232_IsCTSEnabled(comport_num);
-    new_cts_state = RS232_IsCTSEnabled(comport_num);
-    while (1) {
-        rx_count = RS232_PollComport(comport_num, rxBuf, RX_BUF_SIZE);
+	/**< some const for ZigbeeStack */
+	const uint32_t logicType = ZbStack_ns::ZCD_coordinator;
+	const uint32_t panID = 0xFFFF;
+	const uint32_t channelList = ZbStack_ns::ZCD_chanList_15 | ZbStack_ns::ZCD_chanList_25 ;
+	ZbStack_ns::Zb_appInfo_s appInfo_s;
+	appInfo_s.appEndPoint = 2;
+	appInfo_s.appProfileID = 0x000A;
+	appInfo_s.deviceID = 0x0000;
+	appInfo_s.deviceVersion = 0x01;
+	appInfo_s.outputCmdsNum = 3;
+	appInfo_s.outputCmdsList[0] = 0x0001; // discovery
+	appInfo_s.outputCmdsList[1] = 0x0002; // turn led on
+	appInfo_s.outputCmdsList[2] = 0x0003; // turn led off
+	appInfo_s.inputCmdsNum = 1;
+	appInfo_s.inputCmdsList[1] = 0x1001; // discovery
 
-        /* print data */
-        if (rx_count > 0){
-            printf("New data from comport\n");
-            
-            for (count = 0; count < rx_count; count++){
-                printf("%x ", rxBuf[count]);
-            }
-            printf("\n");
-        }
-        
-        new_cts_state = RS232_IsCTSEnabled(comport_num);
-        if (new_cts_state != old_cts_state){
-            printf("CTS's state changed %d\n", new_cts_state);
-            
-            old_cts_state = new_cts_state;
-        }
-    }
+	/**< start ZigbeeStack */
+	HA_ZbStack.CONF_write(ZbStack_ns::ZCD_NV_startupOption, ZbStack_ns::ZCD_startOpt_noClear);
 
-    RS232_CloseComport(comport_num);
+	HA_ZbStack.CONF_write(ZbStack_ns::ZCD_NV_logicalType, logicType);
+	HA_ZbStack.CONF_write(ZbStack_ns::ZCD_NV_panID, panID);
+	HA_ZbStack.CONF_write(ZbStack_ns::ZCD_NV_chanList, channelList);
 
-    return 0;
-}
+	HA_ZbStack.Zb_appRegister_request (appInfo_s);
+	HA_ZbStack.Zb_start_request ();
 
-bool checkFCS(unsigned char *rx_gframe, int size, unsigned char FCS){
-    int count;
-    unsigned char calFCS;
+	/**< wait for start_confirm */
+	printf("Starting Zigbee stack...\n");
+	while (1){
+		HA_ZbStack.Zb_callback_get(callbackType);
 
-    calFCS = 0;
-    for (count = 0; count < size; count++){
-        calFCS ^= rx_gframe[count];
-    }
+		if (callbackType == ZbStack_ns::Zb_startConfirm){
+			HA_ZbStack.Zb_startConfirm_get (startConfirmStatus);
+			if (startConfirmStatus == ZbStack_ns::Zb_success)
+				break;
+		}
+	}
+	printf("Zigbee stack started as Coordinator\n");
 
-    if (calFCS == FCS){
-        return true;
-    }
-    else{
-        return false;
-    }
+	printf("Input command (disco, led1_on, led1_off, led2_on, led2_off): ");
+	printf("Input disco\n");
+	memcpy(usr_cmd, "disco", 5);
+	usr_cmd[5] = '\0';
+
+	/* Send cmd disco */
+	aDataStruct_s.cmdID = 0x0001;
+	aDataStruct_s.data_p = NULL;
+	aDataStruct_s.destAddr = 0xFFFF;
+	aDataStruct_s.len = 0;
+
+	HA_ZbStack.Zb_sendData_request(aDataStruct_s, 0x01, true, 10);
+
+	/* wait for data */
+	num_node_rep = 0;
+	while (1){
+		HA_ZbStack.Zb_callback_get(callbackType);
+
+		if (callbackType == ZbStack_ns::Zb_receiveDataIndication){
+			HA_ZbStack.Zb_receiveDataIndication_get(aDataStruct_s);
+
+			if (aDataStruct_s.cmdID == 0x1001) {
+				printf("Node replied %x\n", aDataStruct_s.srcAddr);
+
+				node_add[num_node_rep] = aDataStruct_s.srcAddr;
+
+				num_node_rep++;
+				if (num_node_rep == 2) {
+					break;
+				}
+			}// end if
+		}
+	}// end while 1
+
+	for (count = 0; count < 1000000000; count++);
+
+	/* turn led 1 on */
+	aDataStruct_s.cmdID = 0x0002;
+	aDataStruct_s.data_p = NULL;
+	aDataStruct_s.destAddr = node_add[0];
+	aDataStruct_s.len = 0;
+
+	HA_ZbStack.Zb_sendData_request(aDataStruct_s, 0x01, true, 10);
+	printf("turn led 1 on\n");
+
+	for (count = 0; count < 1000000000; count++);
+
+	/* turn led 2 on */
+	aDataStruct_s.cmdID = 0x0002;
+	aDataStruct_s.data_p = NULL;
+	aDataStruct_s.destAddr = node_add[1];
+	aDataStruct_s.len = 0;
+
+	HA_ZbStack.Zb_sendData_request(aDataStruct_s, 0x01, true, 10);
+	printf("turn led 2 on\n");
+
+	for (count = 0; count < 1000000000; count++);
+
+	/* turn led 1 off */
+	aDataStruct_s.cmdID = 0x0003;
+	aDataStruct_s.data_p = NULL;
+	aDataStruct_s.destAddr = node_add[0];
+	aDataStruct_s.len = 0;
+
+	HA_ZbStack.Zb_sendData_request(aDataStruct_s, 0x01, true, 10);
+	printf("turn led 1 off\n");
+
+	for (count = 0; count < 1000000000; count++);
+
+	/* turn led 2 off */
+	aDataStruct_s.cmdID = 0x0003;
+	aDataStruct_s.data_p = NULL;
+	aDataStruct_s.destAddr = node_add[1];
+	aDataStruct_s.len = 0;
+
+	HA_ZbStack.Zb_sendData_request(aDataStruct_s, 0x01, true, 10);
+	printf("turn led 2 off\n");
+
+	return 0;
 }

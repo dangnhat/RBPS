@@ -19,7 +19,7 @@
 #define _CC2530ZNP_H_
 
 #include "HA_Glb.h"
-
+#include "misc.h"
 
 /**< ---------------------------- Definitions ------------------------------------- */
 namespace CC_ns{
@@ -33,9 +33,9 @@ typedef enum {
 
 /**< configurations */
 typedef struct {
-    int32_t buad_rate;
-    int32_t comport_num;
-    int32_t poll_period;
+    int32_t buad_rate;		// should be 115200
+    int32_t comport_num; 	// ttyUSB1 is 17
+    int32_t poll_period; 	// in ms
 } conf_USARTParams_s;
 
 /**< end configuration */
@@ -47,9 +47,10 @@ typedef struct {
 class CC2530ZNP {
 public:
     CC2530ZNP (void);
+    ~CC2530ZNP(void);
 
     /**< conf (run-time) */
-    CC_ns::status_t init (CC_ns::conf_UARTParams_s *USARTParams_s);
+    CC_ns::status_t init (CC_ns::conf_USARTParams_s *USARTParams_s);
     CC_ns::status_t USART_reInit (void);
 
     /**< command interface */
@@ -76,9 +77,9 @@ public:
 private:
 
     /**< conf (run-time) interface */
-    int32_t buad_rate;
-    int32_t comport_num;
-    int32_t poll_period;
+    static int32_t buad_rate;
+    static int32_t comport_num;
+    static int32_t poll_period;
     
     void (* timer_call_back)(void);
 
@@ -101,10 +102,11 @@ private:
     /**< end attributes */
     
     /* get data from comport */
-    int32_t rx_buf[1024];
-    
-    
-    void pollComport(void);
+    static cir_queue rx_cir_queue;
+
+    static void pollComport(void);
+    bool checkFCS(unsigned char *rx_gframe, int size, unsigned char FCS);
+    uint8_t genFCS(uint8_t *rx_gframe, int size);
     /* end get data from comport */
 };
 

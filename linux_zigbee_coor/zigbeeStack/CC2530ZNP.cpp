@@ -70,6 +70,11 @@ using namespace CC_ns;
 #define ZB_FIND_DEVICE_REQUEST_SRSP 0x006607
 #define ZB_FIND_DEVICE_CONFIRM      0x0B4685
 
+/* static members */
+int32_t CC2530ZNP::buad_rate;
+int32_t CC2530ZNP::comport_num;
+int32_t CC2530ZNP::poll_period;
+cir_queue CC2530ZNP::rx_cir_queue;
 
 /**
   * @brief Constructor of CC2530ZNP class
@@ -105,143 +110,59 @@ CC2530ZNP::CC2530ZNP (void){
     return;
 }
 
+CC2530ZNP::~CC2530ZNP(void){
+
+	/* stop timer and close comport */
+    stop_timer();
+    RS232_CloseComport(comport_num);
+
+    return;
+}
+
 void CC2530ZNP::pollComport(void) {
-    
+	uint8_t buffer[512];
+	int32_t rev_count;
+	uint16_t count;
+
+	CC_DEBUG("In poll comport\n");
+
+	/* get data */
+	rev_count = RS232_PollComport(comport_num, buffer, 255);
+
+	CC_DEBUG("rev_count %d\n", rev_count);
+	for (count = 0; count < rev_count; count++) {
+		CC_DEBUG("%x ", buffer[count]);
+	}
+	CC_DEBUG("\n");
+	/* store to queue */
+	rx_cir_queue.add_data(buffer, rev_count);
 }
 
 /**
-  * @brief init, Init cc2530 for the first time.
+  * @brief init, Init cc2530 for the first time. //TODO: rewrite
   * @param CC_types::conf_SPIParams_s *SPIParams_s.
   * @param CC_types::conf_GPIOParams_s *GPIOParams_s.
   * @return CC_types::status_t.
   */
-status_t CC2530ZNP::init (conf_SPIParams_s *SPIParams_s, conf_GPIOParams_s *GPIOParams_s){
+status_t CC2530ZNP::init(CC_ns::conf_USARTParams_s *USARTParams_s){
 
-    /* check parameters */
-    if (SPIParams_s->SPI_p == NULL)
+	/* Set data for private vars */
+	buad_rate = USARTParams_s->buad_rate;
+	comport_num = USARTParams_s->comport_num;
+	poll_period = USARTParams_s->poll_period;
+
+	/* open comport */
+    if (RS232_OpenComport(comport_num, buad_rate) == -1){
+        printf("Cannot open comport %d\n", comport_num);
         return failed;
-    if ( (GPIOParams_s->resetGPIO_port == NULL) || (GPIOParams_s->srdyGPIO_port == NULL) )
-        return failed;
-    if ( (GPIOParams_s->mrdyGPIO_port == NULL) && (GPIOParams_s->mrdyGPIO_isUsed) )
-        return failed;
-
-    /* update data members of CC2530 */
-    baudRatePrescaler = SPIParams_s->baudRatePrescaler;
-    SPI_p = SPIParams_s->SPI_p;
-    deviceType = SPIParams_s->deviceType;
-
-    resetGPIO_port = GPIOParams_s->resetGPIO_port;
-    resetGPIO_pin = GPIOParams_s->resetGPIO_pin;
-    resetGPIO_clk = GPIOParams_s->resetGPIO_clk;
-
-    srdyGPIO_port = GPIOParams_s->srdyGPIO_port;
-    srdyGPIO_pin = GPIOParams_s->srdyGPIO_pin;
-    srdyGPIO_clk = GPIOParams_s->srdyGPIO_clk;
-
-    mrdyGPIO_isUsed = GPIOParams_s->mrdyGPIO_isUsed; // if it's false, no need to config other params for mrdy.
-    if (mrdyGPIO_isUsed){
-        mrdyGPIO_port = GPIOParams_s->mrdyGPIO_port;
-        mrdyGPIO_pin = GPIOParams_s->mrdyGPIO_pin;
-        mrdyGPIO_clk = GPIOParams_s->mrdyGPIO_clk;
     }
+
+    /* Start timer */
+    start_timer(poll_period, pollComport);
 
     /* Init GPIOs and SPI */
-    SPI_reInit ();
-    GPIOs_reInit ();
 
     return successful;
-}
-
-/**
-  * @brief SPI_reInit, Init SPI with parameters from data members of object.
-  * @return CC_types::status_t.
-  */
-status_t CC2530ZNP::SPI_reInit (void){
-    if (SPI_p == NULL)
-        return failed;
-
-    SPI_ns::SPI_params_t SPI_paramsStruct;
-    SPI_paramsStruct.baudRatePrescaler = baudRatePrescaler;
-    SPI_paramsStruct.CPHA = SPI_CPHA_2Edge;
-    SPI_paramsStruct.CPOL = SPI_CPOL_Low;
-    SPI_paramsStruct.dataSize = SPI_DataSize_8b;
-    SPI_paramsStruct.firstBit = SPI_FirstBit_MSB;
-    SPI_paramsStruct.direction = SPI_Direction_2Lines_FullDuplex;
-    SPI_paramsStruct.mode = SPI_Mode_Master;
-    SPI_paramsStruct.nss = SPI_NSS_Soft;
-    SPI_p->init (&SPI_paramsStruct);
-
-    return successful;
-}
-
-/**
-  * @brief GPIOs_reInit, Init GPIOs with parameters from data members of object.
-  * @return CC_types::status_t.
-  */
-status_t CC2530ZNP::GPIOs_reInit (void){
-    /* check parameters */
-    if ( (resetGPIO_port == NULL) || (srdyGPIO_port == NULL) )
-        return failed;
-    if ( (mrdyGPIO_port == NULL) && (mrdyGPIO_isUsed) )
-        return failed;
-
-    /* Init GPIOs */
-    RCC_APB2PeriphClockCmd (srdyGPIO_clk | resetGPIO_clk, ENABLE);
-    if (mrdyGPIO_isUsed)
-        RCC_APB2PeriphClockCmd (mrdyGPIO_clk, ENABLE);
-
-    GPIO_InitTypeDef GPIO_InitStruct;
-
-    GPIO_InitStruct.GPIO_Mode = GPIO_Mode_Out_PP;
-    GPIO_InitStruct.GPIO_Speed = GPIO_Speed_10MHz;
-    GPIO_InitStruct.GPIO_Pin = resetGPIO_pin;
-    GPIO_Init (resetGPIO_port, &GPIO_InitStruct);
-
-    if (mrdyGPIO_isUsed){
-        GPIO_InitStruct.GPIO_Pin = mrdyGPIO_pin;
-        GPIO_Init (mrdyGPIO_port, &GPIO_InitStruct);
-        GPIO_SetBits (mrdyGPIO_port, mrdyGPIO_pin);
-    }
-
-    GPIO_InitStruct.GPIO_Mode = GPIO_Mode_IN_FLOATING;
-    GPIO_InitStruct.GPIO_Pin = srdyGPIO_pin;
-    GPIO_Init (srdyGPIO_port, &GPIO_InitStruct);
-
-    return successful;
-}
-
-/**
-  * @brief cmd_SPI_attach, attach SPI object to this CC2530ZNP object.
-  * @return CC_types::status_t: CC_types::SPI_busy if SPI is being used by other device. Otherwise, CC_types::successful.
-  */
-status_t CC2530ZNP::cmd_SPI_attach (void){
-    SPI_ns::status_t retVal;
-    retVal = SPI_p->SM_device_attach (deviceType);
-
-    if (retVal == SPI_ns::busy)
-        return SPI_busy;
-    else if (retVal == SPI_ns::successful){
-        SPI_isAttached = true;
-        return successful;
-    }
-    else
-        return failed;
-}
-
-/**
-  * @brief cmd_SPI_release, release SPI object from this object so other device can use.
-  * @return CC_types::status_t, CC_types::failed if this object is not using SPI object.
-  */
-status_t CC2530ZNP::cmd_SPI_release (void){
-    SPI_ns::status_t retVal;
-    retVal = SPI_p->SM_device_release (deviceType);
-
-    if (retVal == SPI_ns::successful){
-        SPI_isAttached = false;
-        return successful;
-    }
-    else
-        return failed;
 }
 
 /**
@@ -254,46 +175,93 @@ status_t CC2530ZNP::cmd_SPI_release (void){
   */
 status_t CC2530ZNP::cmd_POLL (void){
     /* some vars */
-    uint16_t aCount;
+    uint16_t count;
+    uint8_t data;
+    bool newdata;
+    uint8_t FCS;
+    uint8_t gframe[253];
 
-    /* check SPI_isAttached */
-    if (!SPI_isAttached)
-        return failed;
+    /* check size */
+	if (rx_cir_queue.get_size() == 0) {
+		return failed;
+	}
 
-    dataLen = 0;
+	/* check data and remove garbages */
+	data = rx_cir_queue.preview_data(false);
+	if (data != 0xFE) {
+		/* remove data from queue */
+		rx_cir_queue.get_data();
 
-    /* wait for SRDY to go low */
-    while (GPIO_ReadInputDataBit (srdyGPIO_port, srdyGPIO_pin) == 1);
+		for (count = 1; count < rx_cir_queue.get_size(); count++) {
+			data = rx_cir_queue.preview_data(true);
+			if (data != 0xFE) {
+				rx_cir_queue.get_data();
+			}
+			else {
+				newdata = true;
+				break;
+			}
+		}
+	}
+	else {
+		newdata = true;
+	}
 
-    /* SRDY = 0, set NSS, MRDY low */
-    SPI_p->SM_device_select(deviceType);
+	if (newdata) {
+		/* remove 0xFE */
+		rx_cir_queue.get_data();
 
-    if (mrdyGPIO_isUsed)
-        GPIO_ResetBits (mrdyGPIO_port, mrdyGPIO_pin);
+		dataLen = rx_cir_queue.get_data();
 
-    /* Send POLL cmd */
-    SPI_p->M2F_sendAndGet_blocking (deviceType, 0); //Length
-    SPI_p->M2F_sendAndGet_blocking (deviceType, 0); //cmd0
-    SPI_p->M2F_sendAndGet_blocking (deviceType, 0); //cmd1
+		cmdBuffer[0] = rx_cir_queue.get_data();
+		cmdBuffer[1] = rx_cir_queue.get_data();
 
-    /* wait for SRDY to go high */
-    while (GPIO_ReadInputDataBit (srdyGPIO_port, srdyGPIO_pin) == 0);
+		rx_cir_queue.get_data(dataBuffer, dataLen);
 
-    /* SRDY high, get AREQ message */
-    dataLen = SPI_p->M2F_sendAndGet_blocking (deviceType, 0xFF); //dummy byte
-    cmdBuffer[0] = SPI_p->M2F_sendAndGet_blocking (deviceType, 0xFF);
-    cmdBuffer[1] = SPI_p->M2F_sendAndGet_blocking (deviceType, 0xFF);
-    for (aCount = 0; aCount < dataLen; aCount++){
-        dataBuffer[aCount] = SPI_p->M2F_sendAndGet_blocking (deviceType, 0xFF);
+		FCS = rx_cir_queue.get_data();
+
+		/* check FCS */
+		gframe[0] = dataLen;
+		memcpy(gframe + 1, cmdBuffer, 2);
+		memcpy(gframe + 3, dataBuffer, dataLen);
+
+		if (this->checkFCS(gframe, dataLen + 3, FCS) == true) {
+			return successful;
+		}
+	}
+
+    return failed;
+}
+
+/*----------------------------------------------------------------------------*/
+bool CC2530ZNP::checkFCS(unsigned char *rx_gframe, int size, unsigned char FCS){
+    int count;
+    unsigned char calFCS;
+
+    calFCS = 0;
+    for (count = 0; count < size; count++){
+        calFCS ^= rx_gframe[count];
     }
 
-    /* Set NSS = 1, end transaction */
-    SPI_p->SM_device_deselect (deviceType);
+    if (calFCS == FCS){
+        return true;
+    }
+    else{
+        return false;
+    }
+}
 
-    if (mrdyGPIO_isUsed)
-        GPIO_SetBits (mrdyGPIO_port, mrdyGPIO_pin);
+/*----------------------------------------------------------------------------*/
+uint8_t CC2530ZNP::genFCS(uint8_t *rx_gframe, int size) {
+	int count;
+	uint8_t calFCS;
 
-    return successful;
+	calFCS = 0;
+	for (count = 0; count < size; count++){
+		calFCS ^= rx_gframe[count];
+	}
+
+	return calFCS;
 }
 
 /**
@@ -308,56 +276,61 @@ status_t CC2530ZNP::cmd_POLL (void){
   * + SPI must be attached successfully, otherwise, there will be an infinite loop.
   */
 status_t CC2530ZNP::cmd_SREQ (uint16_t cmd, uint8_t len, uint8_t* data_p){
-    uint8_t aCount;
+    uint8_t count;
+    uint8_t gframe[253];
 
-    /* check SPI_isAttached */
-    if (!SPI_isAttached)
-        return failed;
-
-    /* check len, data_p */
-    if ((len > 250) || ((len != 0) && (data_p == NULL)) )
-        return failed;
-    /* len, DataPtr ok */
-
-    dataLen = 0;
-
-    /* Set NSS, MRDY low, prepare SREQ transaction */
-    SPI_p->SM_device_select (deviceType);
-
-    if (mrdyGPIO_isUsed)
-        GPIO_ResetBits (mrdyGPIO_port, mrdyGPIO_pin);
-
-    /* wait for SRDY to go low */
-    while (GPIO_ReadInputDataBit (srdyGPIO_port, srdyGPIO_pin) == 1);
-
-    /* SRDY = 0, send frame to CC2530ZNP */
-    SPI_p->M2F_sendAndGet_blocking (deviceType, len); // send length.
-    SPI_p->M2F_sendAndGet_blocking (deviceType, (uint8_t) cmd); // send cmd0
-    SPI_p->M2F_sendAndGet_blocking (deviceType, (uint8_t) (cmd >> 8)); // send cmd1;
-
-    for (aCount = 0; aCount < len; aCount++){ // send data.
-        SPI_p->M2F_sendAndGet_blocking (deviceType, data_p[aCount]);
+    /* wait until CC2530ZNP is not busy */
+    while (RS232_IsCTSEnabled(comport_num) == 0) {
+    	;
     }
 
-    /* finish sending frame, wait SRDY to go high */
-    while (GPIO_ReadInputDataBit (srdyGPIO_port, srdyGPIO_pin) == 0);
+    /* pack data */
+    gframe[0] = len;
+    gframe[1] = (uint8_t)cmd;
+    gframe[2] = (uint8_t)(cmd >> 8);
+    memcpy(gframe + 3, data_p, len);
 
-    /* SRDY = 1, receive SRSP from CC2530ZNP */
-    dataLen = SPI_p->M2F_sendAndGet_blocking  (deviceType, 0xFF); // get data len.
-    cmdBuffer[0] = SPI_p->M2F_sendAndGet_blocking (deviceType, 0xFF); // get cmd0
-    cmdBuffer[1] = SPI_p->M2F_sendAndGet_blocking  (deviceType, 0xFF); // get cmd1
-    for (aCount = 0; aCount < dataLen; aCount++){ // get data
-        dataBuffer[aCount] = SPI_p->M2F_sendAndGet_blocking  (deviceType, 0xFF);
+    /* send data */
+    RS232_SendByte(comport_num, 0xFE);
+    for (count = 0; count < (len + 3); count++) {
+    	RS232_SendByte(comport_num, gframe[count]);
     }
+    RS232_SendByte(comport_num, this->genFCS(gframe, len + 3));
 
-    /* Set NSS = 1, end transaction */
-    SPI_p->SM_device_deselect(deviceType);
-
-    if (mrdyGPIO_isUsed)
-        GPIO_SetBits (mrdyGPIO_port, mrdyGPIO_pin);
+    /* wait for respond message */
+    while (cmd_isNewMessage() == false){
+    	;
+    }
 
     return successful;
 }
+
+/*----------------------------------------------------------------------------*/
+status_t CC2530ZNP::cmd_AREQ (uint16_t cmd, uint8_t len, uint8_t* data_p){
+    uint8_t count;
+    uint8_t gframe[253];
+
+    /* wait until CC2530ZNP is not busy */
+    while (RS232_IsCTSEnabled(comport_num) == 0) {
+    	;
+    }
+
+    /* pack data */
+    gframe[0] = len;
+    gframe[1] = (uint8_t)cmd;
+    gframe[2] = (uint8_t)(cmd >> 8);
+    memcpy(gframe + 3, data_p, len);
+
+    /* send data */
+    RS232_SendByte(comport_num, 0xFE);
+    for (count = 0; count < (len + 3); count++) {
+    	RS232_SendByte(comport_num, gframe[count]);
+    }
+    RS232_SendByte(comport_num, this->genFCS(gframe, len + 3));
+
+    return successful;
+}
+
 
 /**
   * @brief cmd_isNewMessage, check if there is a new message from CC2530,
@@ -370,14 +343,55 @@ status_t CC2530ZNP::cmd_SREQ (uint16_t cmd, uint8_t len, uint8_t* data_p){
   * + application should get data from cmdBuffer, dataLen, dataBuffer before call other CC2350 function.
   */
 bool CC2530ZNP::cmd_isNewMessage (void){
-    /**< check SRDY */
-    if ( GPIO_ReadInputDataBit (srdyGPIO_port, srdyGPIO_pin) != 0x00 )
-        return false;
+	uint16_t count;
+	uint8_t data, length;
+	bool newdata = false;
 
-    /**< new message */
-    cmd_POLL ();
+	/* check size */
+	if (rx_cir_queue.get_size() == 0) {
+		return false;
+	}
 
-    return true;
+    /* check data and remove garbages */
+	data = rx_cir_queue.preview_data(false);
+	if (data != 0xFE) {
+		/* remove data from queue */
+		CC_DEBUG("data is not 0xFE, remove\n");
+		rx_cir_queue.get_data();
+
+		for (count = 1; count < rx_cir_queue.get_size(); count++) {
+			data = rx_cir_queue.preview_data(true);
+			if (data != 0xFE) {
+				CC_DEBUG("data is not 0xFE, remove\n");
+				rx_cir_queue.get_data();
+			}
+			else {
+				CC_DEBUG("data is 0xFE, get data\n");
+				newdata = true;
+				break;
+			}
+		}
+	}
+	else {
+		newdata = true;
+	}
+
+	if (newdata == true) {
+		/* get and check size */
+		length = rx_cir_queue.preview_data(true);
+		if (rx_cir_queue.get_size() < (length + 5)) {
+			CC_DEBUG("Data is not ready\n");
+			return false;
+		}
+
+		/**< new message */
+		if (cmd_POLL() == successful) {
+			CC_DEBUG("Data ok\n");
+			return true;
+		}
+	}
+
+    return false;
 }
 
 /**
@@ -387,13 +401,21 @@ bool CC2530ZNP::cmd_isNewMessage (void){
   * @attention
   * + GPIOs have been setup before call this functions.
   */
-status_t CC2530ZNP::sys_reset_hard (void){
-    GPIO_ResetBits (resetGPIO_port, resetGPIO_pin);
-    delay_ms (1);
-    GPIO_SetBits (resetGPIO_port, resetGPIO_pin);
-    delay_ms (3);
+status_t CC2530ZNP::sys_reset_req (void){
+	uint8_t data_buf[1] = {0};
+	uint32_t count;
 
-    cmd_POLL ();
+	/* send data */
+	cmd_AREQ(0x0041, 1, data_buf);
+
+	/* delay */
+	for (count = 0; count < 1000000000; count++);
+	/* send 0x07 (force jump ZNP code) */
+	RS232_SendByte(comport_num, 0x07);
+
+    while (cmd_isNewMessage() == false) {
+    	;
+    }
 
     if (cmdBuffer[0] != 0x41 || cmdBuffer[1] != 0x80)
         return failed;

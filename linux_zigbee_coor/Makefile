@@ -5,8 +5,8 @@
 
 #------------------------- CONFIG INTERFACE -----------------------------------#
 #location of source files and include files
-SRCLOC = usartLib/
-INCLOC = usartLib/
+SRCLOC = usartLib/ zigbeeStack/
+INCLOC = usartLib/ zigbeeStack/
 
 #location of binary and object files
 BINDIR = bin
@@ -24,9 +24,9 @@ CC = gcc
 CXX = g++
 LK = gcc
 
-CFLAGS = $(addprefix -I, ${INCLOC}) -std=gnu99 -O0
+CFLAGS = $(addprefix -I, ${INCLOC}) -std=gnu99 -O0 -g3
 CXXUWFLAGS = -std=gnu99
-CXXEXFLAGS =
+CXXEXFLAGS = -std=gnu++11
 LKFLAGS =
 
 #string array of all source files and object files
