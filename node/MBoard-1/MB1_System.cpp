@@ -94,15 +94,15 @@ Led *MB1_conf_ledBeat_p = &MB1_Led_D5;
 /**< for SysTick and led_beat */
 
 /**< for USART1 */
-const uint32_t MB1_conf_USART1_buadrate = 9600;
-const bool MB1_conf_USART1_retarget_isUsed = false;
+const uint32_t MB1_conf_USART1_buadrate = 115200;
+const bool MB1_conf_USART1_retarget_isUsed = true;
 const uint8_t MB1_conf_USART1_retarget = USART_stdStream_stdout;
 /**< for USART1 */
 
 /**< for USART2 */
 const bool MB1_USART2_isUsed = true;
 const uint32_t MB1_conf_USART2_buadrate = 9600;
-const bool MB1_conf_USART2_retarget_isUsed = true;
+const bool MB1_conf_USART2_retarget_isUsed = false;
 const uint8_t MB1_conf_USART2_retarget = USART_stdStream_stdout;
 /**< for USART1 */
 

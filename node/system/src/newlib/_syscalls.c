@@ -83,7 +83,7 @@ kill(pid_t pid __attribute__((unused)), int sig __attribute__((unused)))
 
 // If you need the empty definitions, remove the -ffreestanding option.
 
-#if __STDC_HOSTED__ == 1
+//#if __STDC_HOSTED__ == 1
 
 char* __env[1] =
   { 0 };
@@ -1155,4 +1155,4 @@ getcwd(char *buf, size_t size)
 
 #endif // defined OS_USE_SEMIHOSTING
 
-#endif // __STDC_HOSTED__ == 1
+//#endif // __STDC_HOSTED__ == 1
