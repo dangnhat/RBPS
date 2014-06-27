@@ -81,11 +81,11 @@ void HA_ZNP_init (void){
 
 	USparams.comport_num = 16;
 	USparams.buad_rate = 115200;
-	USparams.poll_period = 1000;
+	USparams.poll_period = 50;
 
 
     HA_ZNP.init(&USparams);
-    HA_ZNP.sys_reset_req ();
+    HA_ZNP.sys_reset_hard();
 
     return;
 }

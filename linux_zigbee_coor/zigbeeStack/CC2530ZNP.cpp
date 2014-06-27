@@ -401,6 +401,52 @@ bool CC2530ZNP::cmd_isNewMessage (void){
   * @attention
   * + GPIOs have been setup before call this functions.
   */
+status_t CC2530ZNP::sys_reset_hard (void){
+	uint8_t data_buf[1] = {0};
+	uint32_t count;
+
+	/* reset (ATTENTION: using DTR pin to reset) */
+	/* set DTR low to reset*/
+	printf("Reseting...\n");
+	RS232_enableDTR(comport_num);
+	for (count = 0; count < 10000000; count++) {
+		;
+	}
+
+	printf("Release...\n");
+	/* set DTR high to release */
+	RS232_disableDTR(comport_num);
+	for (count = 0; count < 10000000; count++) {
+		;
+	}
+
+	/* send 0x07 (force jump ZNP code) */
+	RS232_SendByte(comport_num, 0x07);
+	printf("Sended 0x07\n");
+
+    while (cmd_isNewMessage() == false) {
+    	;
+    }
+
+    if (cmdBuffer[0] != 0x41 || cmdBuffer[1] != 0x80)
+        return failed;
+
+    transportRev = dataBuffer[1];
+    productID = dataBuffer[2];
+    majorRel = dataBuffer[3];
+    minorRel = dataBuffer[4];
+    maintRel = dataBuffer[5];
+
+    return successful;
+}
+
+/**
+  * @brief CC2530 hard reset, reset and send POLL command to get SYS_RESET_IND message
+  * and update versions info in data members.
+  * @return CC_types::status_t.
+  * @attention
+  * + GPIOs have been setup before call this functions.
+  */
 status_t CC2530ZNP::sys_reset_req (void){
 	uint8_t data_buf[1] = {0};
 	uint32_t count;
@@ -409,7 +455,10 @@ status_t CC2530ZNP::sys_reset_req (void){
 	cmd_AREQ(0x0041, 1, data_buf);
 
 	/* delay */
-	for (count = 0; count < 1000000000; count++);
+	for (count = 0; count < 10000000; count++){
+		;
+	}
+
 	/* send 0x07 (force jump ZNP code) */
 	RS232_SendByte(comport_num, 0x07);
 
