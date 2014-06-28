@@ -9,71 +9,76 @@
     <ListView
         android:id="@+id/viewTopo"
         android:layout_width="match_parent"
-        android:layout_height="200dp" >
-
-    </ListView>
-
-    <ScrollView
-        android:id="@+id/scrollViewDetails"
-        android:layout_width="match_parent"
         android:layout_height="fill_parent"
         android:layout_weight="1" >
-
-        <TextView
-            android:id="@+id/viewDetails"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceLarge" />
-
-    </ScrollView>
+    </ListView>
 
     <TableLayout
         android:id="@+id/TableLayout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="fill_horizontal"
         android:background="@drawable/background"
-        android:stretchColumns="3"
-        android:layout_gravity="fill_horizontal" >
+        android:stretchColumns="2" >
 
         <TableRow
-            android:id="@+id/tableRow"
+            android:id="@+id/tableRow1"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_weight="1" >
-
+            android:layout_weight="1"
+            android:orientation="horizontal" >
+            
             <Button
-                android:id="@+id/btnScan"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_horizontal|center_vertical"
-                android:layout_weight="1"
-                android:drawableLeft="@drawable/scan"
-                android:onClick="scanTopo"
-                android:text="Scan" />
+	            android:id="@+id/btnMeasure"
+	            android:layout_width="fill_parent"
+	            android:layout_height="wrap_content"
+	            android:layout_weight="1"
+	            android:drawableLeft="@drawable/heart"
+	            android:gravity="center_horizontal|center_vertical"
+	            android:onClick="measure"
+	            android:text="Measure" />
 
-            <Button
-                android:id="@+id/btnMeasure"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_horizontal|center_vertical"
-                android:onClick="measure"
-                android:drawableLeft="@drawable/heart"
-                android:layout_weight="1"
-                android:text="Measure" />
-
-            <Button
-                android:id="@+id/btnDetail"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_horizontal|center_vertical"
-                android:onClick="detailNode"
-                android:drawableLeft="@drawable/detail"
-                android:layout_weight="1"
-                android:text="Detail" />
-
+	        <Button
+	            android:id="@+id/btnDetail"
+	            android:layout_width="fill_parent"
+	            android:layout_height="wrap_content"
+	            android:layout_weight="1"
+	            android:drawableLeft="@drawable/detail"
+	            android:gravity="center_horizontal|center_vertical"
+	            android:onClick="detailNode"
+	            android:text="Detail" />
         </TableRow>
 
+        
+
+        <TableRow
+            android:id="@+id/tableRow2"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal" >
+
+            <Button
+                android:id="@+id/btnPredict"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:drawableLeft="@drawable/predict"
+                android:gravity="center_horizontal|center_vertical"
+                android:onClick="predict"
+                android:text="Predict" />
+
+            <Button
+                android:id="@+id/btnSchedule"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:drawableLeft="@drawable/schedule"
+                android:gravity="center_horizontal|center_vertical"
+                android:onClick="schedule"
+                android:text="Schedule" />
+
+        </TableRow>
     </TableLayout>
 
 </TableLayout>

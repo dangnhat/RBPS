@@ -3,14 +3,8 @@
     tools:context="dhbk.android.topomanager.MainActivity" >
 
     <item
-        android:id="@+id/action_database"
-        android:title="@string/action_database" />
-    <item
         android:id="@+id/action_setIp"
         android:title="@string/action_setIp" />
-    <item
-        android:id="@+id/action_schedule"
-        android:title="@string/action_schedule" />
     <item
         android:id="@+id/action_about"
         android:title="@string/action_about" />

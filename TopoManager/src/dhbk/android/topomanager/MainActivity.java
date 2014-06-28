@@ -18,6 +18,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.Html;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -31,15 +32,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
-//	private final int frameSize = 257;
 	public Socket clientSocket;
-//	public String FRAME[] = new String[frameSize];
-	public static String FRAME;
+	public static String DATA;
+	
 	private final int SERVER_PORT = 9999;
 	private final String SERVER_IP_DEFAULT = "192.168.150.1";
 	private static String SERVER_IP = "";
-//	private PrintWriter out = null;
-//	private BufferedReader in = null;
 	private final String scanAct = "1";
 	private final String measureAct = "2";
 	private final String detailAct = "3";
@@ -50,24 +48,24 @@ public class MainActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-//		String line = "1234";
-//		line = line.substring(0, 1); 
-//		TextView detailView = (TextView)findViewById(R.id.viewDetails);
-//		detailView.setText(line);
-		Button measureBtn = (Button)findViewById(R.id.btnMeasure);
-		Button detailBtn = (Button)findViewById(R.id.btnDetail);
+
+//		Button measureBtn = (Button)findViewById(R.id.btnMeasure);
+//		Button detailBtn = (Button)findViewById(R.id.btnDetail);
 		/* If have no node, disable the Measure and Detail button */
-		measureBtn.setClickable(false);
-		detailBtn.setClickable(false);
+//		measureBtn.setClickable(false);
+//		detailBtn.setClickable(false);
 		
-		ListView topoView = (ListView)findViewById(R.id.viewTopo);
+		final ListView topoView = (ListView)findViewById(R.id.viewTopo);
+		
 		ArrayList<String> list = new ArrayList<String>();
 		list.add("node 1");
 		list.add("node 2");
 		list.add("node 3");
 		list.add("node 4");
-		ArrayAdapter<String> adapter = new ArrayAdapter<String>(MainActivity.this,
-					android.R.layout.simple_expandable_list_item_1, list);
+		list.add("node 5");
+		list.add("node 6");
+		final ArrayAdapter<String> adapter = new ArrayAdapter<String>(MainActivity.this,
+					android.R.layout.simple_list_item_1, list);
 		topoView.setAdapter(adapter);
 		topoView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
@@ -75,7 +73,16 @@ public class MainActivity extends Activity {
 			public void onItemClick(AdapterView<?> parent,
 					View view, int position, long id) {
 				// TODO Auto-generated method stub
-				view.setBackgroundColor(Color.BLUE);
+				
+//				Log.d("first", String.valueOf(parent.getFirstVisiblePosition()));
+//				Log.d("position", String.valueOf(position));
+//				Log.d("last", String.valueOf(parent.getLastVisiblePosition()));
+				
+				for(int i = 0; i < parent.getLastVisiblePosition(); i++) {
+//					Log.d("i", String.valueOf(i));
+					parent.getChildAt(i).setBackgroundColor(Color.WHITE);
+				}
+				view.setBackgroundColor(Color.CYAN);
 			}
 		});
 	}
@@ -92,12 +99,6 @@ public class MainActivity extends Activity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 	    // Handle item selection
 	    switch (item.getItemId()) {
-	    case R.id.action_database:
-	    	viewDatabase();
-	    	return true;
-	    case R.id.action_schedule:
-            schedule();
-            return true;	
         case R.id.action_setIp:
             showSetServerIp();
             return true;
@@ -109,21 +110,7 @@ public class MainActivity extends Activity {
 	    }
 	}
 	
-	public void viewDatabase() {
-		if(useIpDefault) {
-			new socketWorker().execute(SERVER_IP_DEFAULT, detailAct);
-		}else {
-			new socketWorker().execute(SERVER_IP, detailAct);
-		}
-		
-		return;
-	}
-	
-	public void schedule() {
-		
-		return;
-	}
-	
+	/* Handle action_setIp option */
 	public void showSetServerIp() {
 		final Pattern IP_ADDRESS = Pattern.compile(
 	        "((25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9])\\.(25[0-5]|2[0-4]"
@@ -171,6 +158,7 @@ public class MainActivity extends Activity {
 		return;
 	}
 	
+	/* Handle action_about option */
 	public void showAboutUs() {
 		AlertDialog.Builder aboutUs = new AlertDialog.Builder(MainActivity.this);
 		final TextView usView = new TextView(MainActivity.this);
@@ -199,17 +187,6 @@ public class MainActivity extends Activity {
 		return;
 	}
 	
-	/* Handle Scan button click */
-	public void scanTopo(View viewClick) {
-		if(useIpDefault) {
-			new socketWorker().execute(SERVER_IP_DEFAULT, scanAct);
-		}else {
-			new socketWorker().execute(SERVER_IP, scanAct);
-		}
-		
-		return;
-	}
-	
 	/* Handle Measure button click */
 	public void measure(View viewClick) {
 		if(useIpDefault) {
@@ -231,13 +208,22 @@ public class MainActivity extends Activity {
 		
 		return;
 	}
+	
+	/* Handle Predict button click */
+	public void predict(View viewClick) {
+				
+	}
+	
+	/* Handle Schedule button click */
+	public void schedule(View viewClick) {
+				
+	}
 		
 	/* Process transceiver */
 	public class socketWorker extends AsyncTask<String, Void, String> {
 		private int errno = 0;
-		private TextView detailView = (TextView)findViewById(R.id.viewDetails);
 		private ListView topoView = (ListView)findViewById(R.id.viewTopo);
-		private Button scanBtn = (Button)findViewById(R.id.btnScan);
+		private Button scheduleBtn = (Button)findViewById(R.id.btnSchedule);
 		private Button measureBtn = (Button)findViewById(R.id.btnMeasure);
 		private Button detailBtn = (Button)findViewById(R.id.btnDetail);
     	private ProgressDialog progDialog;
@@ -245,9 +231,7 @@ public class MainActivity extends Activity {
     	String result = "";
     	
 		@Override
-		protected void onPreExecute() {
-			detailView.setText("abc");
-			
+		protected void onPreExecute() {			
 			progDialog = ProgressDialog.show(MainActivity.this, "Loading", "Please wait...", true);
 		}
 		
@@ -265,7 +249,7 @@ public class MainActivity extends Activity {
 	        }
 			
 			/* Disable al buttons while processing transceiver data */
-	    	scanBtn.setClickable(false);
+	    	scheduleBtn.setClickable(false);
 	    	measureBtn.setClickable(false);
 	    	detailBtn.setClickable(false);
 	    	
@@ -287,12 +271,13 @@ public class MainActivity extends Activity {
 	            }
 	            
 	            /* Create a frame */
-	            FRAME = createFrame(params[1], data);
+	            DATA = createDataFrame(params[1], data);
+//	            Log.d("data", DATA);
 	            
 	            result += params[1];
 	            
 	            /* Send frame to server */
-	            out.println(FRAME);
+	            out.println(DATA);
 	            
 	            /* Read topology data from server */
 	            String line = "";
@@ -307,18 +292,18 @@ public class MainActivity extends Activity {
 	            clientSocket.close();
 	            
 	            /* Enable all buttons */
-		        scanBtn.setClickable(true);
-//		        measureBtn.setClickable(true);
-//		        detailBtn.setClickable(true);
+		        scheduleBtn.setClickable(true);
+		        measureBtn.setClickable(true);
+		        detailBtn.setClickable(true);
 		        
 	            return result;
 	        }catch(Exception e) {
 	        	errno = 2;
 	        	
 	        	/* Enable all buttons */
-		        scanBtn.setClickable(true);
-//		        measureBtn.setClickable(true);
-//		        detailBtn.setClickable(true);
+	        	scheduleBtn.setClickable(true);
+		        measureBtn.setClickable(true);
+		        detailBtn.setClickable(true);
 		        
 	            e.printStackTrace();
 	        }
@@ -335,35 +320,41 @@ public class MainActivity extends Activity {
 				Toast.makeText(MainActivity.this, "Reading error!", Toast.LENGTH_SHORT).show();
 			}else {
 				Toast.makeText(MainActivity.this, "Done!", Toast.LENGTH_SHORT).show();
+				
 				//TODO
-				String cmd = result.substring(0, 1); //get cmd.
-				if(cmd.equals(scanAct)) {
-					ArrayList<String> list = new ArrayList<String>();
-					ArrayAdapter<String> adapter = new ArrayAdapter<String>(MainActivity.this,
-								android.R.layout.simple_list_item_1, list);
-					topoView.setAdapter(adapter);
-					topoView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-
-						@Override
-						public void onItemClick(AdapterView<?> parent,
-								View view, int position, long id) {
-							// TODO Auto-generated method stub
-							
-						}
-					});
-				}else if(cmd.equals(measureAct)) {
-					
-				}else if(cmd.equals(detailAct)) {
-					
-				}else if(cmd.equals(databaseAct)) {
-					
-				}
+//				String cmd = result.substring(0, 1); //get cmd.
+//				if(cmd.equals(scanAct)) {
+//					ArrayList<String> list = new ArrayList<String>();
+//					
+//					final ArrayAdapter<String> adapter = new ArrayAdapter<String>(MainActivity.this,
+//								android.R.layout.simple_list_item_1, list);
+//					topoView.setAdapter(adapter);
+//					topoView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+//
+//						@Override
+//						public void onItemClick(AdapterView<?> parent,
+//								View view, int position, long id) {
+//							// TODO Auto-generated method stub
+//							view.setBackgroundColor(Color.CYAN);
+//							for(int i = 0; i < adapter.getCount(); i++) {
+//								if(i != position)
+//									topoView.getChildAt(i).setBackgroundColor(Color.WHITE);
+//							}
+//						}
+//					});
+//				}else if(cmd.equals(measureAct)) {
+//					
+//				}else if(cmd.equals(detailAct)) {
+//					
+//				}else if(cmd.equals(databaseAct)) {
+//					
+//				}
 			}
 	    }
 		
 	}
 	
-	public String createFrame(String cmd, String data) {
+	public String createDataFrame(String cmd, String data) {
 		String frame = "";
 		int lengthData = data.length();
 
