@@ -16,6 +16,8 @@ import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.text.Editable;
 import android.text.Html;
 import android.util.Log;
@@ -38,12 +40,41 @@ public class MainActivity extends Activity {
 	private final int SERVER_PORT = 9999;
 	private final String SERVER_IP_DEFAULT = "192.168.150.1";
 	private static String SERVER_IP = "";
-	private final String scanAct = "1";
-	private final String measureAct = "2";
-	private final String detailAct = "3";
-	private final String databaseAct = "4";
+	private final String scanCmd = "1";
+	private final String measureCmd = "4";
+	private final String detailBpCmd = "5";
+	private final String detailHrCmd = "7";
+	private final String detailHeightCmd = "9";
+	private final String detailWeightCmd = "B";
+	private final String detailAncetedentCmd = "D";
+	private final String predictCmd = "F";
+	private final String newScheduleCmd = "11";
+	private final String clearScheduleCmd = "12";
 	private static boolean useIpDefault = true;
 	
+	private static Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+        	Log.d("arg1", (String)msg.obj);
+    	}
+    }; 
+	
+	private Thread background = new Thread(new Runnable() {
+		
+		@Override
+		public void run() {
+			// TODO Auto-generated method stub
+			try {
+//            	while(true){
+                	Message msg = handler.obtainMessage(1, "string");
+                	handler.sendMessage(msg);
+//            	}
+            }catch(Throwable t) {
+            	Log.d("err", "err");
+            }
+		}
+	});
+    
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -74,17 +105,14 @@ public class MainActivity extends Activity {
 					View view, int position, long id) {
 				// TODO Auto-generated method stub
 				
-//				Log.d("first", String.valueOf(parent.getFirstVisiblePosition()));
-//				Log.d("position", String.valueOf(position));
-//				Log.d("last", String.valueOf(parent.getLastVisiblePosition()));
-				
-				for(int i = 0; i < parent.getLastVisiblePosition(); i++) {
-//					Log.d("i", String.valueOf(i));
+				for(int i = 0; i < parent.getCount(); i++) {
 					parent.getChildAt(i).setBackgroundColor(Color.WHITE);
 				}
 				view.setBackgroundColor(Color.CYAN);
 			}
 		});
+		
+		background.start();
 	}
 
 	@Override
@@ -190,9 +218,9 @@ public class MainActivity extends Activity {
 	/* Handle Measure button click */
 	public void measure(View viewClick) {
 		if(useIpDefault) {
-			new socketWorker().execute(SERVER_IP_DEFAULT, measureAct);
+			new socketWorker("").execute(SERVER_IP_DEFAULT, measureCmd);
 		}else {
-			new socketWorker().execute(SERVER_IP, measureAct);
+			new socketWorker("").execute(SERVER_IP, measureCmd);
 		}
 		
 		return;
@@ -201,9 +229,9 @@ public class MainActivity extends Activity {
 	/* Handle Detail button click */
 	public void detailNode(View viewClick) {
 		if(useIpDefault) {
-			new socketWorker().execute(SERVER_IP_DEFAULT, detailAct);
+			new socketWorker("").execute(SERVER_IP_DEFAULT, detailBpCmd);
 		}else {
-			new socketWorker().execute(SERVER_IP, detailAct);
+			new socketWorker("").execute(SERVER_IP, detailBpCmd);
 		}
 		
 		return;
@@ -211,12 +239,25 @@ public class MainActivity extends Activity {
 	
 	/* Handle Predict button click */
 	public void predict(View viewClick) {
-				
+		if(useIpDefault) {
+			new socketWorker("").execute(SERVER_IP_DEFAULT, predictCmd);
+		}else {
+			new socketWorker("").execute(SERVER_IP, predictCmd);
+		}
+		
+		return;		
 	}
 	
 	/* Handle Schedule button click */
 	public void schedule(View viewClick) {
-				
+		
+		if(useIpDefault) {
+			new socketWorker("").execute(SERVER_IP_DEFAULT, newScheduleCmd);
+		}else {
+			new socketWorker("").execute(SERVER_IP, newScheduleCmd);
+		}
+		
+		return;		
 	}
 		
 	/* Process transceiver */
@@ -229,6 +270,11 @@ public class MainActivity extends Activity {
     	private ProgressDialog progDialog;
     	
     	String result = "";
+    	String data = "";	//data in a frame.
+    	
+    	public socketWorker(String data){
+    		this.data = data;
+    	}
     	
 		@Override
 		protected void onPreExecute() {			
@@ -257,18 +303,6 @@ public class MainActivity extends Activity {
 	        try{
 	        	PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
 	        	BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-	        	
-	        	String data = "";	//data in a frame.
-	            
-	            if(params[1].equals(scanAct)) {
-	            	data = "";
-	            }else if(params[1].equals(measureAct)) {
-	            	data = "12";	//patientID
-	            }else if(params[1].equals(detailAct)) {
-	            	data = "12";	//patientID
-	            }else if(params[1].equals(databaseAct)) {
-	            	data = "";
-	            }
 	            
 	            /* Create a frame */
 	            DATA = createDataFrame(params[1], data);
