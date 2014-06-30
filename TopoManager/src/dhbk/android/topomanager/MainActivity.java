@@ -12,6 +12,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.AsyncTask;
@@ -89,12 +90,9 @@ public class MainActivity extends Activity {
 		final ListView topoView = (ListView)findViewById(R.id.viewTopo);
 		
 		ArrayList<String> list = new ArrayList<String>();
-		list.add("node 1");
-		list.add("node 2");
-		list.add("node 3");
-		list.add("node 4");
-		list.add("node 5");
-		list.add("node 6");
+		list.add("Node ID: 1\tPatient's ID: 1\n\tPham Huu Dang Nhat");
+		list.add("Node ID: 2\tPatient's ID: 2\n\tNguyen Van Hien");
+
 		final ArrayAdapter<String> adapter = new ArrayAdapter<String>(MainActivity.this,
 					android.R.layout.simple_list_item_1, list);
 		topoView.setAdapter(adapter);
@@ -105,7 +103,7 @@ public class MainActivity extends Activity {
 					View view, int position, long id) {
 				// TODO Auto-generated method stub
 				
-				for(int i = 0; i < parent.getCount(); i++) {
+				for(int i = 0; i < parent.getChildCount(); i++) {
 					parent.getChildAt(i).setBackgroundColor(Color.WHITE);
 				}
 				view.setBackgroundColor(Color.CYAN);
@@ -228,11 +226,13 @@ public class MainActivity extends Activity {
 	
 	/* Handle Detail button click */
 	public void detailNode(View viewClick) {
-		if(useIpDefault) {
-			new socketWorker("").execute(SERVER_IP_DEFAULT, detailBpCmd);
-		}else {
-			new socketWorker("").execute(SERVER_IP, detailBpCmd);
-		}
+//		if(useIpDefault) {
+//			new socketWorker("").execute(SERVER_IP_DEFAULT, detailBpCmd);
+//		}else {
+//			new socketWorker("").execute(SERVER_IP, detailBpCmd);
+//		}
+		Intent activityIntent = new Intent(this, DetailActivity.class);
+		startActivity(activityIntent);
 		
 		return;
 	}

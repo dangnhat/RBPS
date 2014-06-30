@@ -5,5 +5,7 @@
     <string name="hello_world">Hello world!</string>
     <string name="action_setIp">Server IP</string>
     <string name="action_about">About us</string>
+    <string name="title_activity_detail">DetailActivity</string>
+    <string name="action_settings">Settings</string>
 
 </resources>
