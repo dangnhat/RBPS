@@ -1,0 +1,261 @@
+General frame format:
+/************************************************/
+/*  1 (bytes)   |       2       |     0-255     */
+/*  leghth      |   command     |   data        */
+/************************************************/
+
+Truong nao co nhieu byte thi ben trai la byte thap.
+Khi truyen neu theo tung byte thi byte ben trai cung se duoc truyen truoc.
+
+Commands:
+
+/*----------------------------------------------------------------------------*/
+* scan_nodes:
+/************************************************/
+/*  1 (bytes)   |       2       |     0         */
+/*  leghth = 4  |   0x0001      |   nothing     */
+/************************************************/
+
+/*----------------------------------------------------------------------------*/
+* scan_nodes_rep:
+/****************************************************************************/
+/*  1 (bytes)   |       2       |     1     |   4       |   4       |   ... */
+/*  leghth = var|   0x0002      |     cont  |   node_id |   node_id |   ... */
+/****************************************************************************/
+
+cont = 1, van con du lieu o frame tiep theo
+cont = 0, khong con du lieu nua.
+
+/*----------------------------------------------------------------------------*/
+* update_node:
+/************************************************************/
+/*  1 (bytes)   |       2       |     4     |   4           */
+/*  leghth = 8  |   0x0003      |   node_id |   patient_id  */
+/************************************************************/
+
+Node -> coordinator: khi benh nhan den su dung may do, nhap va gui len coordinator
+de kiem tra
+Coordinator->mobile (asynchronous command): gui cho mobile khi muon mobile cap nhat lai du lieu.
+(chi gui cho mobile khi patient_id co ton tai trong he thong)
+
+/*----------------------------------------------------------------------------*/
+* update_node_rep:
+/********************************************/
+/*  1 (bytes)   |       2       |     1     */
+/*  leghth = 8  |   0x0016      |   status  */
+/********************************************/
+
+Coordinator -> node: khi nhan duoc update_node tu node thi Coordinator se kiem tra
+va gui lai update_node_rep cho node do.
+
+status = OK
+status = patient_id doesn't exist.
+
+/*----------------------------------------------------------------------------*/
+* detail_info:
+/************************************************/
+/*  1 (bytes)   |       2       |   4           */
+/*  leghth = 4  |   0x0014      |   patient_id  */
+/************************************************/
+
+node, mobile -> Coordinator: de lay du lieu ve thong tin cua benh nhan (ngay sinh, ten)
+
+/*----------------------------------------------------------------------------*/
+* detail_info_rep:
+/************************************************************************************************/
+/*  1 (bytes)   |       2       |   4 (1 | 1 | 2)                                   | var       */
+/*  leghth = var|   0x0015      |   date_of_birth (day (1) | month (1) | year (2) ) | name      */
+/************************************************************************************************/
+
+Coordinator -> mobile, node.
+
+/*----------------------------------------------------------------------------*/
+* measure_node:
+/************************************************/
+/*  1 (bytes)   |       2       |   4           */
+/*  leghth = 4  |   0x0004      |   node_id     */
+/************************************************/
+
+mobile -> Coordinator, Coordinator -> node: kich hoat qua trinh do.
+Qua trinh do bat dau voi viec node thong bao cho nguoi duoc do la qua trinh do 
+se bat dau trong 10' nua de nguoi ta chuan bi. Nguoi duoc do co the gia han 
+qua trinh do them moi lan 5'.
+
+Coordinator va mobile khong cho report tu viec do. Report se duoc gui bat dong bo
+tu node khi do xong.
+
+/*----------------------------------------------------------------------------*/
+* node_report (asynchronous command):
+/************************************************************************************************************************************/
+/*  1 (bytes)       |       2       |   4       |   4           |   4           |   4           |   6           |   1               */
+/*  leghth = 17     |   0x0017      |   node_id |   systolic    |   diastolic   |   heart rate  |   time stamp  |   need_predict    */
+/************************************************************************************************************************************/
+
+node -> Coordinator: coordinator ghi lai ket qua vao kho du lieu, va dien them time_stamp
+(node KHONG BIET time_stamp). need_predict = 1 khi node can Coordinator gui lai prediction_rep (khi benh nhan do truc tiep)
+need_predict = 0 khi node khong can prediction_rep (luc do khi co lenh measure_node)
+
+Coordinator -> mobile: gui cho mobile de cap nhat du lieu. (khong quan tam need_predict)
+
+Lenh nay la lenh bat dong bo, co the gui tu node -> Coordinator, Coordinator -> mobile bat ky luc nao.
+
+Gia tri cua nhip huyet ap, nhip tim dinh dang nhu sau:
+2 byte phan thuc - 2 byte phan thap phan
+
+Timestamp:
+1 byte hour - 1 byte min - 1 byte day - 1 byte month - 2 byte year
+
+/*----------------------------------------------------------------------------*/
+* detail_blood_pressure:
+/************************************************/
+/*  1 (bytes)   |       2       |   4           */
+/*  leghth = 4  |   0x0005      |   patient_id  */
+/************************************************/
+
+mobile -> Coordinator.
+
+/*----------------------------------------------------------------------------*/
+* detail_blood_pressure_rep:
+/************************************************/
+/*  1 (bytes)       |       2       |   1       |   8                                   |   8               |
+/*  leghth = var    |   0x0006      |   cont    |   most_recent_BP (sys (4) | dias (4)) |   avg BP in day   |
+
+|   4                   |   2           |   4                   |   2           |
+|   peak sys BP in day  |   timestamp   |   peak dias BP in day |   timestamp   |
+
+8               |   4                    |   6           |   4                      |   6           |
+avg BP in week  |   peak sys BP in weak  |   timestamp   |   peak dias BP in weak   |   timestamp   |
+
+8                |   4                      |   6           |   4                       |   6           |
+avg BP in month  |   peak sys BP in month   |   timestamp   |   peak dias BP in month   |   timestamp   |
+
+8           |   2       |   ...     |
+BP in day   |   time    |   ...     | (tat ca trong ngay)
+/************************************************/
+
+Coordinator -> mobile.
+
+/*----------------------------------------------------------------------------*/
+* detail_heart_rate:
+/************************************************/
+/*  1 (bytes)   |       2       |   4           */
+/*  leghth = 4  |   0x0007      |   patient_id  */
+/************************************************/
+
+mobile -> Coordinator.
+
+/*----------------------------------------------------------------------------*/
+* detail_heart_rate_rep:
+/************************************************/
+/*  1 (bytes)       |       2       |   1       |   4                |   4               |
+/*  leghth = var    |   0x0008      |   cont    |   most_recent_HR   |   avg HR in day   |
+
+|   4               |   2           |
+|   peak HR in day  |   timestamp   |
+
+4               |   4                |   6           |
+avg HR in week  |   peak HR in weak  |   timestamp   |
+
+4                |   4                  |   6           |
+avg HR in month  |   peak HR in month   |   timestamp   |
+
+4           |   2       |   ...     |
+HR in day   |   time    |   ...     | (tat ca trong ngay)
+/************************************************/
+
+Coordinator -> mobile.
+
+/*----------------------------------------------------------------------------*/
+* detail_height:
+/************************************************/
+/*  1 (bytes)   |       2       |   4           */
+/*  leghth = 4  |   0x0009      |   patient_id  */
+/************************************************/
+
+/*----------------------------------------------------------------------------*/
+* detail_height_rep:
+/****************************************************************************/
+/*  1 (bytes)   |       2       |   4                       |   6           */
+/*  leghth = 10 |   0x000A      |   most_recent_height (m)  |   time_stamp  */
+/****************************************************************************/
+
+/*----------------------------------------------------------------------------*/
+* detail_weight:
+/************************************************/
+/*  1 (bytes)   |       2       |   4           */
+/*  leghth = 4  |   0x000B      |   patient_id  */
+/************************************************/
+
+/*----------------------------------------------------------------------------*/
+* detail_weight_rep:
+/********************************************************************************/
+/*  1 (bytes)           |       2       |   4               |   4       | ...   */
+/*  leghth = 0-7 * (8)  |   0x000C      |   weight in a day |   date    | ...   */
+/********************************************************************************/
+
+/*----------------------------------------------------------------------------*/
+* detail_medical_history:
+/************************************************/
+/*  1 (bytes)   |       2       |   4           */
+/*  leghth = 4  |   0x000D      |   patient_id  */
+/************************************************/
+
+/*----------------------------------------------------------------------------*/
+* detail_medical_history_rep:
+/************************************************************************************************************************/
+/*  1 (bytes)   |       2       |   1                               |   1               |   1               |   1       */
+/*  leghth = 4  |   0x000E      |   diabetes (1 = true, 0 = false)  |   dyslipidemia    |   atherosclerosis |   gout    */
+/************************************************************************************************************************/
+
+/*----------------------------------------------------------------------------*/
+* prediction:
+/************************************************/
+/*  1 (bytes)   |       2       |   4           */
+/*  leghth = 4  |   0x000F      |   patient_id  */
+/************************************************/
+
+mobile -> Coordinator
+
+/*----------------------------------------------------------------------------*/
+* prediction_rep:
+/************************************************/
+/*  1 (bytes)   |       2       |   1                       |   8                           |   4               |
+/*  leghth = 4  |   0x0010      |   prehypertension_risk    |   avg BP in month (sys-dias)  |   avg HR in month |
+
+|   4                   |   1                               |   1               |   1               |   1       */
+|   avg BMI in month    |   diabetes (1 = true, 0 = false)  |   dyslipidemia    |   atherosclerosis |   gout    */
+/************************************************/
+
+/*----------------------------------------------------------------------------*/
+* new_schedule_to_coor:
+/****************************************************************************************************************/
+/*  1 (bytes)   |       2       |   4       |   1           |   2           |   1               |   2           */
+/*  leghth = 10 |   0x0011      |   node_id |   time_abs_on |   time_abs    |   time_in_day_on  |   time_in_day */
+/****************************************************************************************************************/
+
+mobile -> Coordinator
+
+/*----------------------------------------------------------------------------*/
+* udt_schedule_to_mobile:
+/****************************************************************************************************************/
+/*  1 (bytes)   |       2       |   4       |   1           |   2           |   1               |   2           */
+/*  leghth = 10 |   0x0013      |   node_id |   time_abs_on |   time_abs    |   time_in_day_on  |   time_in_day */
+/****************************************************************************************************************/
+
+Coordinator -> all mobile: sau khi gui new_schedule_to_coor, mobile chua cap nhat gia tri moi cua schedule cho toi
+khi nhan duoc lenh udt_schedule_to_mobile
+
+/*----------------------------------------------------------------------------*/
+* hold_measurement
+/********************************************************************/
+/*  1 (bytes)   |       2       |   4       |   1                   */
+/*  leghth = 10 |   0x0018      |   node_id |   time to stall (min) */
+/********************************************************************/
+
+node -> Coordinator, Coordinator -> mobile: khi benh nhan khong muon do thi node co the 
+gui lenh nay bao doi. Coordinator se khong lam gi ca ngoai viec forward qua cho mobile.
+Mobile se hien thi len bao cho nguoi do biet.
+
+node tu quan ly viec cho nay.
+
+time_to_stall = 255 (reversed for future use)
