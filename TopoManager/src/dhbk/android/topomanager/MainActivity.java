@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.ColorStateList;
@@ -22,13 +23,16 @@ import android.os.Message;
 import android.text.Editable;
 import android.text.Html;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -42,13 +46,10 @@ public class MainActivity extends Activity {
 	private final String SERVER_IP_DEFAULT = "192.168.150.1";
 	private static String SERVER_IP = "";
 	private final String scanCmd = "1";
-	private final String measureCmd = "4";
-	private final String detailBpCmd = "5";
-	private final String detailHrCmd = "7";
-	private final String detailHeightCmd = "9";
-	private final String detailWeightCmd = "B";
-	private final String detailAncetedentCmd = "D";
-	private final String predictCmd = "F";
+	private final String measureCmd = "2";
+	private final String detailBpCmd = "3";
+	private final String predictCmd = "4";
+	private final String scheduleCmd = "5";
 	private final String newScheduleCmd = "11";
 	private final String clearScheduleCmd = "12";
 	private static boolean useIpDefault = true;
@@ -93,8 +94,7 @@ public class MainActivity extends Activity {
 		list.add("Node ID: 1\tPatient's ID: 1\n\tPham Huu Dang Nhat");
 		list.add("Node ID: 2\tPatient's ID: 2\n\tNguyen Van Hien");
 
-		final ArrayAdapter<String> adapter = new ArrayAdapter<String>(MainActivity.this,
-					android.R.layout.simple_list_item_1, list);
+		final ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1,list);
 		topoView.setAdapter(adapter);
 		topoView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
@@ -215,11 +215,13 @@ public class MainActivity extends Activity {
 	
 	/* Handle Measure button click */
 	public void measure(View viewClick) {
-		if(useIpDefault) {
-			new socketWorker("").execute(SERVER_IP_DEFAULT, measureCmd);
-		}else {
-			new socketWorker("").execute(SERVER_IP, measureCmd);
-		}
+//		if(useIpDefault) {
+//			new socketWorker("").execute(SERVER_IP_DEFAULT, measureCmd);
+//		}else {
+//			new socketWorker("").execute(SERVER_IP, measureCmd);
+//		}
+		Intent activityIntent = new Intent(this, MeasureActivity.class);
+		startActivity(activityIntent);
 		
 		return;
 	}
@@ -227,9 +229,9 @@ public class MainActivity extends Activity {
 	/* Handle Detail button click */
 	public void detailNode(View viewClick) {
 //		if(useIpDefault) {
-//			new socketWorker("").execute(SERVER_IP_DEFAULT, detailBpCmd);
+//			new socketWorker("").execute(SERVER_IP_DEFAULT, detailCmd);
 //		}else {
-//			new socketWorker("").execute(SERVER_IP, detailBpCmd);
+//			new socketWorker("").execute(SERVER_IP, detailCmd);
 //		}
 		Intent activityIntent = new Intent(this, DetailActivity.class);
 		startActivity(activityIntent);
@@ -239,23 +241,26 @@ public class MainActivity extends Activity {
 	
 	/* Handle Predict button click */
 	public void predict(View viewClick) {
-		if(useIpDefault) {
-			new socketWorker("").execute(SERVER_IP_DEFAULT, predictCmd);
-		}else {
-			new socketWorker("").execute(SERVER_IP, predictCmd);
-		}
+//		if(useIpDefault) {
+//			new socketWorker("").execute(SERVER_IP_DEFAULT, predictCmd);
+//		}else {
+//			new socketWorker("").execute(SERVER_IP, predictCmd);
+//		}
+		Intent activityIntent = new Intent(this, PredictActivity.class);
+		startActivity(activityIntent);
 		
 		return;		
 	}
 	
 	/* Handle Schedule button click */
 	public void schedule(View viewClick) {
-		
-		if(useIpDefault) {
-			new socketWorker("").execute(SERVER_IP_DEFAULT, newScheduleCmd);
-		}else {
-			new socketWorker("").execute(SERVER_IP, newScheduleCmd);
-		}
+//		if(useIpDefault) {
+//			new socketWorker("").execute(SERVER_IP_DEFAULT, newScheduleCmd);
+//		}else {
+//			new socketWorker("").execute(SERVER_IP, newScheduleCmd);
+//		}
+		Intent activityIntent = new Intent(this, ScheduleActivity.class);
+		startActivity(activityIntent);
 		
 		return;		
 	}
@@ -391,8 +396,10 @@ public class MainActivity extends Activity {
 	public String createDataFrame(String cmd, String data) {
 		String frame = "";
 		int lengthData = data.length();
-
-		frame += String.valueOf(lengthData) + cmd + data;
+		if(cmd.equals(scheduleCmd))
+			frame += String.valueOf(lengthData) + cmd + data;
+		else
+			frame += cmd + data;
 		
 		return frame;
 	}

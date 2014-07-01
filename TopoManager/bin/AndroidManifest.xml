@@ -30,6 +30,18 @@
             android:name="dhbk.android.topomanager.DetailActivity"
             android:label="@string/title_activity_detail" >
         </activity>
+        <activity
+            android:name="dhbk.android.topomanager.MeasureActivity"
+            android:label="@string/title_activity_measure" >
+        </activity>
+        <activity
+            android:name="dhbk.android.topomanager.PredictActivity"
+            android:label="@string/title_activity_predict" >
+        </activity>
+        <activity
+            android:name="dhbk.android.topomanager.ScheduleActivity"
+            android:label="@string/title_activity_schedule" >
+        </activity>
     </application>
 
 </manifest>
