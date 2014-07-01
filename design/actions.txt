@@ -1,0 +1,48 @@
+Node va Coor:
+=============
+Node luon hoat dong, khong tat han.
+
+Khi khoi dong hien thi cho chon che do hoat dong cua may: cho nguoi su dung truc tiep hay an len benh nhan can theo doi thuong xuyen.
+
+Khi benh nhan su dung may truc tiep: (truong hop benh nhan la nguoi binh thuong toi su dung de kiem tra suc khoe)
+    Node nhan patient's id tu benh nhan, gui -----> update_node
+    Coor tra ve <------------ update_node_rep
+    Neu status la OK thi
+        gui ----------> detail_info len Coor
+        cho nhan detail_info_rep <----------
+        Chuyen qua man hinh welcome, ten benh nhan
+        Co 2 nut de benh nhan co the chon do hay exit (trong luc nay node kho nhan lenh measure_node neu co)
+        Neu do, thi may bat dau do, sau khi do xong thi gui ------------> node_report len coor (need_predict = 1)
+            Coor tra ve <-------------- prediction_rep
+            Hien thi len man hinh gia tri do duoc va prediction_rep
+            Co 2 nut do lai va exit
+                Neu do lai thi lam tuong tu
+                Neu exit thi thong bao exit va tat LCD 
+    Neu status KO OK thi thong bao ko dung va cho nhap lai hoac exit
+    Truoc khi exit thi gui update_node voi patient_id = 0
+    
+Khi gan len benh nhan can theo doi thuong xuyen.
+    Node nhan patient's id tu benh nhan, gui -----> update_node
+    Coor tra ve <------------ update_node_rep
+    Neu status la OK 
+        gui ----------> detail_info len Coor
+        cho nhan detail_info_rep <----------
+        Chuyen qua man hinh welcome, ten benh nhan
+        
+        O che do cho lenh tu Coor
+        Neu lenh measure_node thi 
+            thong bao len cho benh nhan la se do trong 10' nua
+            Neu benh nhan muon gia han thi gui hold_measurement -----------> voi thoi gian can gia han len Coor
+            Neu da toi gio do thi node bat dau do 
+            sau khi do xong thi gui ------------> node_report len coor (need_predict = 0)
+        
+        Neu nhan nut exit thi cung tuong tu nhu tren, gui update_node voi patient_id = 0 va chuyen ra man hinh chon che do
+        
+Ben trong node thi luon phai co it nhat: 
+1 main thread va 1 thread ZNP
+Main thread khi muon gui 1 thong diep len Coor thi gui qua thread ZNP (co the dung mailbox) theo dung dinh dang 
+cua general_frame_format. Va nguoc lai. thread ZNP se dam nhan viec gui len Coor va nhan du lieu tu Coor gui ve.
+
+
+            
+
