@@ -53,6 +53,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/rbps_node/MBoard-1}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/rbps_node/CoOS/kernel}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/rbps_node/CoOS/portable}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/rbps_node/libs}&quot;"/>
 								</option>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.defs.1137618071" name="Defined symbols (-D)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.defs" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="DEBUG"/>
@@ -72,6 +73,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/rbps_node/MBoard-1}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/rbps_node/CoOS/kernel}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/rbps_node/CoOS/portable}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/rbps_node/libs}&quot;"/>
 								</option>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs.1476846717" name="Defined symbols (-D)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="DEBUG"/>
@@ -91,6 +93,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/rbps_node/MBoard-1}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/rbps_node/CoOS/kernel}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/rbps_node/CoOS/portable}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/rbps_node/libs}&quot;"/>
 								</option>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.cpp.compiler.noexceptions.1693086551" name="Do not use exceptions (-fno-exceptions)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.cpp.compiler.noexceptions" useByScannerDiscovery="true" value="true" valueType="boolean"/>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.cpp.compiler.nortti.1838808383" name="Do not use RTTI (-fno-rtti)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.cpp.compiler.nortti" useByScannerDiscovery="true" value="true" valueType="boolean"/>
@@ -153,6 +156,8 @@
 					<sourceEntries>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="CoOS"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="MBoard-1"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="ldscripts"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="libs"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="system"/>
 					</sourceEntries>
@@ -212,6 +217,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/rbps_node/MBoard-1}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/rbps_node/CoOS/kernel}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/rbps_node/CoOS/portable}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/rbps_node/libs}&quot;"/>
 								</option>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.defs.180413214" name="Defined symbols (-D)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.defs" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="STM32F10X_HD"/>
@@ -230,6 +236,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/rbps_node/MBoard-1}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/rbps_node/CoOS/kernel}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/rbps_node/CoOS/portable}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/rbps_node/libs}&quot;"/>
 								</option>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs.693744572" name="Defined symbols (-D)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="STM32F10X_HD"/>
@@ -248,6 +255,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/rbps_node/MBoard-1}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/rbps_node/CoOS/kernel}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/rbps_node/CoOS/portable}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/rbps_node/libs}&quot;"/>
 								</option>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.cpp.compiler.noexceptions.1915063476" name="Do not use exceptions (-fno-exceptions)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.cpp.compiler.noexceptions" useByScannerDiscovery="true" value="true" valueType="boolean"/>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.cpp.compiler.nortti.1012765018" name="Do not use RTTI (-fno-rtti)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.cpp.compiler.nortti" useByScannerDiscovery="true" value="true" valueType="boolean"/>

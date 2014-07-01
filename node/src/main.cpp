@@ -9,8 +9,10 @@
 #include <cstdio>
 #include <cstring>
 #include "stm32f10x.h"
-#include "MB1_System.h"
 #include "coocox.h"
+#include "MB1_System.h"
+
+#include "cLCD20x4.h"
 
 /* stacks */
 OS_STK bp_monitoring_task_stack [1024];
@@ -31,9 +33,9 @@ int main (void) {
 
 	/* Start OS */
 	CoInitOS();
-	CoCreateTask(bp_monitoring_task, 0, 0, &bp_monitoring_task_stack[1024-1], 1024);
-	CoCreateTask(keypad_task, 0, 0, &keypad_task_stack[1024-1], 1024);
-	CoCreateTask(controller_task, 0, 0, &controller_task_stack[1024-1], 1024);
+//	CoCreateTask(bp_monitoring_task, 0, 0, &bp_monitoring_task_stack[1024-1], 1024);
+//	CoCreateTask(keypad_task, 0, 0, &keypad_task_stack[1024-1], 1024);
+//	CoCreateTask(controller_task, 0, 0, &controller_task_stack[1024-1], 1024);
 	CoCreateTask(znp_task, 0, 0, &znp_task_stack[1024-1], 1024);
 	CoStartOS();
 
@@ -94,6 +96,8 @@ void controller_task(void *param) {
  * @return      NERVER RETURN
  */
 void znp_task(void *param) {
+	clcd20x4 a_lcd;
+
 	while(1) {
 		printf("This is znp task\n");
 		CoTimeDelay(0, 0, 1, 0);
