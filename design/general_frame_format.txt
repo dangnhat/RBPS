@@ -38,6 +38,9 @@ de kiem tra
 Coordinator->mobile (asynchronous command): gui cho mobile khi muon mobile cap nhat lai du lieu.
 (chi gui cho mobile khi patient_id co ton tai trong he thong)
 
+patient_id = 0 nghia la ko co ai, khi node exit thi node se gui update_node voi patient_id = 0 len Coor
+Coor se khong gui update_node_rep ve.
+
 /*----------------------------------------------------------------------------*/
 * update_node_rep:
 /********************************************/
