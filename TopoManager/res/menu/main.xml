@@ -6,6 +6,9 @@
         android:id="@+id/action_setIp"
         android:title="@string/action_setIp" />
     <item
+        android:id="@+id/action_reconnect"
+        android:title="@string/action_reconnect" />
+    <item
         android:id="@+id/action_about"
         android:title="@string/action_about" />
 

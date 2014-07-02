@@ -1,6 +1,7 @@
 package dhbk.android.topomanager;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.InetSocketAddress;
@@ -11,7 +12,6 @@ import java.util.regex.Pattern;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.ColorStateList;
@@ -23,23 +23,20 @@ import android.os.Message;
 import android.text.Editable;
 import android.text.Html;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
+import android.webkit.WebView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
-	public Socket clientSocket;
+	public static Socket clientSocket;
 	public static String DATA;
 	
 	private final int SERVER_PORT = 9999;
@@ -47,33 +44,72 @@ public class MainActivity extends Activity {
 	private static String SERVER_IP = "";
 	private final String scanCmd = "1";
 	private final String measureCmd = "2";
-	private final String detailBpCmd = "3";
+	private final String detailCmd = "3";
 	private final String predictCmd = "4";
 	private final String scheduleCmd = "5";
 	private final String newScheduleCmd = "11";
 	private final String clearScheduleCmd = "12";
 	private static boolean useIpDefault = true;
+	private static boolean conn = false;
 	
-	private static Handler handler = new Handler() {
+	private Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
-        	Log.d("arg1", (String)msg.obj);
+        	Log.d("obj", (String)msg.obj);
+        	String name = "<p>"+(String)msg.obj+"</p>";
+        	ListView topoView = (ListView)findViewById(R.id.viewTopo);
+    		WebView wv = new WebView(MainActivity.this);
+    		ArrayList<WebView> list = new ArrayList<WebView>();
+    		wv.loadData(name, "text/html", "UTF-8");
+    		
+    		list.add(wv);
+    		list.add(wv);
+//    		list.add("Node ID: 1\tPatient's ID: 1\n\t"+name);
+//    		list.add("Node ID: 2\tPatient's ID: 2\n\tNguyen Van Hien");
+
+    		ArrayAdapter<WebView> adapter = new ArrayAdapter<WebView>(MainActivity.this, android.R.layout.simple_list_item_1,list);
+    		topoView.setAdapter(adapter);
+    		topoView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+    			@Override
+    			public void onItemClick(AdapterView<?> parent,
+    					View view, int position, long id) {
+    				// TODO Auto-generated method stub
+    				
+    				for(int i = 0; i < parent.getChildCount(); i++) {
+    					parent.getChildAt(i).setBackgroundColor(Color.WHITE);
+    				}
+    				view.setBackgroundColor(Color.CYAN);
+    			}
+    		});
     	}
     }; 
 	
+    /* Always connect to sever */
 	private Thread background = new Thread(new Runnable() {
 		
 		@Override
 		public void run() {
-			// TODO Auto-generated method stub
-			try {
-//            	while(true){
-                	Message msg = handler.obtainMessage(1, "string");
-                	handler.sendMessage(msg);
-//            	}
-            }catch(Throwable t) {
-            	Log.d("err", "err");
-            }
+			/* Transfer data */
+			try{
+	        	PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+	        	BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+	            
+	        	out.println(scanCmd);
+	        	
+	            String line = "";
+	            String result = "";
+	            while(true) {
+	            	line = in.readLine().toString();
+	            	if(line.equalsIgnoreCase("end")) break;
+	            	result += line;
+	            }
+	            Message msg = handler.obtainMessage(1, (Object)result);
+	            handler.sendMessage(msg);
+	        }catch(Exception e) {
+		        Log.d("inout", "err");
+	            e.printStackTrace();
+	        }
 		}
 	});
     
@@ -81,37 +117,34 @@ public class MainActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-
-//		Button measureBtn = (Button)findViewById(R.id.btnMeasure);
-//		Button detailBtn = (Button)findViewById(R.id.btnDetail);
-		/* If have no node, disable the Measure and Detail button */
-//		measureBtn.setClickable(false);
-//		detailBtn.setClickable(false);
 		
-		final ListView topoView = (ListView)findViewById(R.id.viewTopo);
+		/* Try to connecting to the server */
+		try {
+			clientSocket = new Socket();
+			clientSocket.bind(null);
+			clientSocket.connect((new InetSocketAddress(SERVER_IP_DEFAULT, SERVER_PORT)), 10000);
+        }catch(Exception e) {
+        	conn = false;
+        	Toast.makeText(MainActivity.this, "Can not connect!", Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+            return;
+        }	
+		conn = true;
 		
-		ArrayList<String> list = new ArrayList<String>();
-		list.add("Node ID: 1\tPatient's ID: 1\n\tPham Huu Dang Nhat");
-		list.add("Node ID: 2\tPatient's ID: 2\n\tNguyen Van Hien");
-
-		final ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1,list);
-		topoView.setAdapter(adapter);
-		topoView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-
-			@Override
-			public void onItemClick(AdapterView<?> parent,
-					View view, int position, long id) {
-				// TODO Auto-generated method stub
-				
-				for(int i = 0; i < parent.getChildCount(); i++) {
-					parent.getChildAt(i).setBackgroundColor(Color.WHITE);
-				}
-				view.setBackgroundColor(Color.CYAN);
-			}
-		});
-		
+		/* Run the background thread */
 		background.start();
 	}
+	
+	@Override
+	protected void onDestroy() {
+        super.onDestroy();
+        try {
+			clientSocket.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+        Toast.makeText(getApplicationContext(),"Closed!", Toast.LENGTH_SHORT).show();
+    }
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -127,6 +160,9 @@ public class MainActivity extends Activity {
 	    switch (item.getItemId()) {
         case R.id.action_setIp:
             showSetServerIp();
+            return true;
+        case R.id.action_reconnect:
+        	reconnect();
             return true;
         case R.id.action_about:
             showAboutUs();
@@ -149,27 +185,36 @@ public class MainActivity extends Activity {
 		alert.setTitle("Server IP");
 		alert.setMessage("Enter the IP address of server");
 		final EditText input = new EditText(MainActivity.this);
-		input.setHint("Default: " + SERVER_IP_DEFAULT);
+		if(useIpDefault)
+			input.setHint("Default: " + SERVER_IP_DEFAULT);
+		else 
+			input.setText(SERVER_IP);
 		alert.setView(input);
 		
-		alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+		alert.setPositiveButton("Reconnect", new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int whichButton) {
 				Editable value = input.getText();
 				SERVER_IP = String.valueOf(value);
 				if(IP_ADDRESS.matcher(SERVER_IP).matches()) {
-					useIpDefault = false;
 					Toast.makeText(MainActivity.this, "Use the new IP address!", Toast.LENGTH_SHORT).show();
+					useIpDefault = false;
 				}else {
-					useIpDefault = true;
 					Toast.makeText(MainActivity.this, "Invalid IP address! Use default IP.", Toast.LENGTH_SHORT).show();
+					useIpDefault = true;
 				}
-			}
-		});
-		
-		alert.setNeutralButton("Default", new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialog, int whichButton) {
-				Toast.makeText(MainActivity.this, "Use default IP.", Toast.LENGTH_SHORT).show();
-				useIpDefault = true;
+				/* Reconnect */
+				try {
+					clientSocket = new Socket();
+					clientSocket.bind(null);
+					if(useIpDefault)
+						clientSocket.connect((new InetSocketAddress(SERVER_IP_DEFAULT, SERVER_PORT)), 5000);
+					else
+						clientSocket.connect((new InetSocketAddress(SERVER_IP, SERVER_PORT)), 5000);
+					Toast.makeText(MainActivity.this, "Connected!", Toast.LENGTH_SHORT).show();
+		        }catch(Exception e) {
+		        	Toast.makeText(MainActivity.this, "Can not connect!", Toast.LENGTH_SHORT).show();
+		            e.printStackTrace();
+		        }
 			}
 		});
 
@@ -181,6 +226,34 @@ public class MainActivity extends Activity {
 		
 		alert.show();
 		
+		return;
+	}
+	
+	/* Handle action_reconnect option */
+	public void reconnect() {
+		try {
+			clientSocket.close();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		try {
+			clientSocket = new Socket();
+			clientSocket.bind(null);
+			if(useIpDefault)
+				clientSocket.connect((new InetSocketAddress(SERVER_IP_DEFAULT, SERVER_PORT)), 5000);
+			else
+				clientSocket.connect((new InetSocketAddress(SERVER_IP, SERVER_PORT)), 5000);
+        }catch(Exception e) {
+        	Toast.makeText(MainActivity.this, "Can not connect!", Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+            return;
+        }
+		if(!conn) {
+			conn = true;
+			background.start();
+		}
+
 		return;
 	}
 	
@@ -215,24 +288,21 @@ public class MainActivity extends Activity {
 	
 	/* Handle Measure button click */
 	public void measure(View viewClick) {
-//		if(useIpDefault) {
-//			new socketWorker("").execute(SERVER_IP_DEFAULT, measureCmd);
-//		}else {
-//			new socketWorker("").execute(SERVER_IP, measureCmd);
-//		}
-		Intent activityIntent = new Intent(this, MeasureActivity.class);
-		startActivity(activityIntent);
+		if(conn) {
+			new socketWorker("").execute(measureCmd);
+		}else
+			Toast.makeText(MainActivity.this, "Please connect again!", Toast.LENGTH_SHORT).show();
 		
 		return;
 	}
 	
 	/* Handle Detail button click */
 	public void detailNode(View viewClick) {
-//		if(useIpDefault) {
-//			new socketWorker("").execute(SERVER_IP_DEFAULT, detailCmd);
-//		}else {
-//			new socketWorker("").execute(SERVER_IP, detailCmd);
-//		}
+		if(conn) {
+			new socketWorker("").execute(detailCmd);
+		}else
+			Toast.makeText(MainActivity.this, "Please connect again!", Toast.LENGTH_SHORT).show();
+		
 		Intent activityIntent = new Intent(this, DetailActivity.class);
 		startActivity(activityIntent);
 		
@@ -241,11 +311,11 @@ public class MainActivity extends Activity {
 	
 	/* Handle Predict button click */
 	public void predict(View viewClick) {
-//		if(useIpDefault) {
-//			new socketWorker("").execute(SERVER_IP_DEFAULT, predictCmd);
-//		}else {
-//			new socketWorker("").execute(SERVER_IP, predictCmd);
-//		}
+		if(conn) {
+			new socketWorker("").execute(predictCmd);
+		}else
+			Toast.makeText(MainActivity.this, "Please connect again!", Toast.LENGTH_SHORT).show();
+		
 		Intent activityIntent = new Intent(this, PredictActivity.class);
 		startActivity(activityIntent);
 		
@@ -254,11 +324,11 @@ public class MainActivity extends Activity {
 	
 	/* Handle Schedule button click */
 	public void schedule(View viewClick) {
-//		if(useIpDefault) {
-//			new socketWorker("").execute(SERVER_IP_DEFAULT, newScheduleCmd);
-//		}else {
-//			new socketWorker("").execute(SERVER_IP, newScheduleCmd);
-//		}
+		if(conn) {
+			new socketWorker("").execute(scheduleCmd);
+		}else
+			Toast.makeText(MainActivity.this, "Please connect again!", Toast.LENGTH_SHORT).show();
+		
 		Intent activityIntent = new Intent(this, ScheduleActivity.class);
 		startActivity(activityIntent);
 		
@@ -268,10 +338,6 @@ public class MainActivity extends Activity {
 	/* Process transceiver */
 	public class socketWorker extends AsyncTask<String, Void, String> {
 		private int errno = 0;
-		private ListView topoView = (ListView)findViewById(R.id.viewTopo);
-		private Button scheduleBtn = (Button)findViewById(R.id.btnSchedule);
-		private Button measureBtn = (Button)findViewById(R.id.btnMeasure);
-		private Button detailBtn = (Button)findViewById(R.id.btnDetail);
     	private ProgressDialog progDialog;
     	
     	String result = "";
@@ -287,33 +353,14 @@ public class MainActivity extends Activity {
 		}
 		
 		@Override
-		protected String doInBackground(String... params) {
-			/* Try to connecting to the server */
-			try {
-				clientSocket = new Socket();
-				clientSocket.bind(null);
-				clientSocket.connect((new InetSocketAddress(params[0], SERVER_PORT)), 1000);
-	        }catch(Exception e) {
-	        	errno = 1;
-	            e.printStackTrace();
-	            return null;
-	        }
-			
-			/* Disable al buttons while processing transceiver data */
-	    	scheduleBtn.setClickable(false);
-	    	measureBtn.setClickable(false);
-	    	detailBtn.setClickable(false);
-	    	
-			/* If code segment below be reached, starting transceiver data */
+		protected String doInBackground(String... params) {	
+			/* Open a output stream and a input stream to send and receive data */
 	        try{
 	        	PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
 	        	BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 	            
 	            /* Create a frame */
-	            DATA = createDataFrame(params[1], data);
-//	            Log.d("data", DATA);
-	            
-	            result += params[1];
+	            DATA = createDataFrame(params[0], data);
 	            
 	            /* Send frame to server */
 	            out.println(DATA);
@@ -325,25 +372,10 @@ public class MainActivity extends Activity {
 	            	if(line.equalsIgnoreCase("end")) break;
 	            	result += line;
 	            }
-	            /* Close all streams */
-	            out.close();
-	            in.close();
-	            clientSocket.close();
-	            
-	            /* Enable all buttons */
-		        scheduleBtn.setClickable(true);
-		        measureBtn.setClickable(true);
-		        detailBtn.setClickable(true);
 		        
 	            return result;
 	        }catch(Exception e) {
-	        	errno = 2;
-	        	
-	        	/* Enable all buttons */
-	        	scheduleBtn.setClickable(true);
-		        measureBtn.setClickable(true);
-		        detailBtn.setClickable(true);
-		        
+	        	errno = 1;
 	            e.printStackTrace();
 	        }
 	        
@@ -353,44 +385,14 @@ public class MainActivity extends Activity {
 		@Override
 	    protected void onPostExecute(String result) {
 			progDialog.dismiss();
-			if(errno == 1) { //Connection error occur.
-				Toast.makeText(MainActivity.this, "Can not connect!", Toast.LENGTH_SHORT).show();
-			}else if(errno == 2) { //Reading error occur.
-				Toast.makeText(MainActivity.this, "Reading error!", Toast.LENGTH_SHORT).show();
+			if(errno == 1) { //Transfering error occur.
+				Toast.makeText(MainActivity.this, "Transfering error!", Toast.LENGTH_SHORT).show();
 			}else {
 				Toast.makeText(MainActivity.this, "Done!", Toast.LENGTH_SHORT).show();
-				
 				//TODO
-//				String cmd = result.substring(0, 1); //get cmd.
-//				if(cmd.equals(scanAct)) {
-//					ArrayList<String> list = new ArrayList<String>();
-//					
-//					final ArrayAdapter<String> adapter = new ArrayAdapter<String>(MainActivity.this,
-//								android.R.layout.simple_list_item_1, list);
-//					topoView.setAdapter(adapter);
-//					topoView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-//
-//						@Override
-//						public void onItemClick(AdapterView<?> parent,
-//								View view, int position, long id) {
-//							// TODO Auto-generated method stub
-//							view.setBackgroundColor(Color.CYAN);
-//							for(int i = 0; i < adapter.getCount(); i++) {
-//								if(i != position)
-//									topoView.getChildAt(i).setBackgroundColor(Color.WHITE);
-//							}
-//						}
-//					});
-//				}else if(cmd.equals(measureAct)) {
-//					
-//				}else if(cmd.equals(detailAct)) {
-//					
-//				}else if(cmd.equals(databaseAct)) {
-//					
-//				}
+				Log.d("result", result);
 			}
 	    }
-		
 	}
 	
 	public String createDataFrame(String cmd, String data) {
