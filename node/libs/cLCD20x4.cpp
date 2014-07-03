@@ -11,7 +11,7 @@
  */
 
 #include "cLCD20x4.h"
-#include "coocox.h" //for delay_ms
+#include "stdarg.h"
 
 /* Definitions */
 #if CLCD20x4_DEBUG
@@ -24,43 +24,43 @@
 GPIO_TypeDef *RS_port = GPIOB;
 const uint16_t RS_pin = GPIO_Pin_9;
 GPIOMode_TypeDef RS_mode = GPIO_Mode_Out_PP;
-GPIOSpeed_TypeDef RS_speed = GPIO_Speed_10MHz;
+GPIOSpeed_TypeDef RS_speed = GPIO_Speed_2MHz;
 const uint32_t RS_RCC = RCC_APB2Periph_GPIOB;
 
 GPIO_TypeDef *RW_port = GPIOB;
 const uint16_t RW_pin = GPIO_Pin_8;
 GPIOMode_TypeDef RW_mode = GPIO_Mode_Out_PP;
-GPIOSpeed_TypeDef RW_speed = GPIO_Speed_10MHz;
+GPIOSpeed_TypeDef RW_speed = GPIO_Speed_2MHz;
 const uint32_t RW_RCC = RCC_APB2Periph_GPIOB;
 
 GPIO_TypeDef *EN_port = GPIOB;
 const uint16_t EN_pin = GPIO_Pin_7;
 GPIOMode_TypeDef EN_mode = GPIO_Mode_Out_PP;
-GPIOSpeed_TypeDef EN_speed = GPIO_Speed_10MHz;
+GPIOSpeed_TypeDef EN_speed = GPIO_Speed_2MHz;
 const uint32_t EN_RCC = RCC_APB2Periph_GPIOB;
 
 GPIO_TypeDef *DB4_port = GPIOA;
 const uint16_t DB4_pin = GPIO_Pin_15;
 GPIOMode_TypeDef DB4_mode = GPIO_Mode_Out_PP;
-GPIOSpeed_TypeDef DB4_speed = GPIO_Speed_10MHz;
+GPIOSpeed_TypeDef DB4_speed = GPIO_Speed_2MHz;
 const uint32_t DB4_RCC = RCC_APB2Periph_GPIOA;
 
 GPIO_TypeDef *DB5_port = GPIOB;
 const uint16_t DB5_pin = GPIO_Pin_3;
 GPIOMode_TypeDef DB5_mode = GPIO_Mode_Out_PP;
-GPIOSpeed_TypeDef DB5_speed = GPIO_Speed_10MHz;
+GPIOSpeed_TypeDef DB5_speed = GPIO_Speed_2MHz;
 const uint32_t DB5_RCC = RCC_APB2Periph_GPIOB;
 
 GPIO_TypeDef *DB6_port = GPIOB;
 const uint16_t DB6_pin = GPIO_Pin_10;
 GPIOMode_TypeDef DB6_mode = GPIO_Mode_Out_PP;
-GPIOSpeed_TypeDef DB6_speed = GPIO_Speed_10MHz;
+GPIOSpeed_TypeDef DB6_speed = GPIO_Speed_2MHz;
 const uint32_t DB6_RCC = RCC_APB2Periph_GPIOB;
 
 GPIO_TypeDef *DB7_port = GPIOB;
 const uint16_t DB7_pin = GPIO_Pin_11;
 GPIOMode_TypeDef DB7_mode[] = {GPIO_Mode_Out_PP, GPIO_Mode_IN_FLOATING}; //0 for output, 1 for input
-GPIOSpeed_TypeDef DB7_speed = GPIO_Speed_10MHz;
+GPIOSpeed_TypeDef DB7_speed = GPIO_Speed_2MHz;
 const uint32_t DB7_RCC = RCC_APB2Periph_GPIOB;
 
 void (*GPIOs_RCC_fp)(uint32_t, FunctionalState) = RCC_APB2PeriphClockCmd;
@@ -140,10 +140,18 @@ cLCD_cmd_FS_4bit_2line = 0x28,
 /* Set DDRAM Address :
  * RS = 0, RW = 0, 1 AC6 AC5 AC4 AC3 AC2 AC1 AC0
  * Set DDRAM address to Ac.
- * 1 line mode: DDRAM address 00h-4Fh
- * 2 line mode: DDRAM address 00h-27h for line 1, 40h-67h for line 2
+ * 1 line mode: ?
+ * 2 line mode:
+ * 00 - 13 (line 1, pos 1-20)
+ * 40 - 53 (line 2)
+ * 14 - 27 (line 3)
+ * 54 - 67 (line 4)
  * 37 us.
  */
+cLCD_DDRAM_line1 = 0x00,
+cLCD_DDRAM_line2 = 0x40,
+cLCD_DDRAM_line3 = 0x14,
+cLCD_DDRAM_line4 = 0x54,
 
 /* Read busy flag and AC
  * RS = 0, RW = 1, 0us, output BF AC6 - AC0
@@ -165,31 +173,146 @@ clcd20x4::clcd20x4(void) {
 
 	/* Init lcd */
 	init_lcd();
+
+	/* Init private vars */
+	cur_line = 1;
+	cur_pos = 1;
 }
 
 /*----------------------------------------------------------------------------*/
+int16_t clcd20x4::set_cursor(uint8_t line, uint8_t pos) {
+	uint8_t ddram_addr = 0;
+
+	/* check line and pos */
+	if ((line < 1) || (line > 4)) {
+		return clcd20x4_ns::failed;
+	}
+
+	if ((pos < 1) || (pos > 20)) {
+		return clcd20x4_ns::failed;
+	}
+
+	/* calculate DDRAM address */
+	switch (line) {
+	case 1:
+		ddram_addr = cLCD_DDRAM_line1 + pos - 1;
+		break;
+	case 2:
+		ddram_addr = cLCD_DDRAM_line2 + pos - 1;
+		break;
+	case 3:
+		ddram_addr = cLCD_DDRAM_line3 + pos - 1;
+		break;
+	case 4:
+		ddram_addr = cLCD_DDRAM_line4 + pos - 1;
+		break;
+	default:
+		return clcd20x4_ns::failed;
+	}
+
+	/* send set DDRAM address command */
+	send_byte(cmd, write, ddram_addr | 0x80);
+
+	/* save state */
+	cur_line = line;
+	cur_pos = pos;
+
+	return clcd20x4_ns::successful;
+}
+
+/*----------------------------------------------------------------------------*/
+void clcd20x4::clear(void) {
+	/* send clear command */
+	send_byte(cmd, write, cLCD_cmd_ClearDisplay);
+
+	/* save state */
+	cur_line = 1;
+	cur_pos = 1;
+}
+
+/*----------------------------------------------------------------------------*/
+void clcd20x4::home(void) {
+	/* send clear command */
+	send_byte(cmd, write, cLCD_cmd_ReturnHome);
+
+	/* save state */
+	cur_line = 1;
+	cur_pos = 1;
+}
+
+/*----------------------------------------------------------------------------*/
+void clcd20x4::putc(int8_t a_char) {
+	/* send data */
+	send_byte(data, write, a_char);
+
+	/* save state (only correct when in 2 line mode) */
+	cur_pos++;
+	if (cur_pos > 20) {
+		cur_pos = 1;
+
+		cur_line = cur_line + 1;
+		if (cur_line == 5) {
+			cur_line = 1;
+		}
+
+		set_cursor(cur_line, cur_pos);
+	}
+}
+
+/*----------------------------------------------------------------------------*/
+int16_t clcd20x4::puts(int8_t* a_string) {
+	int16_t num_char = 0;
+
+	while (*a_string != '\0') {
+		putc(*a_string++);
+		num_char++;
+	}
+
+	return num_char;
+}
+
+/*----------------------------------------------------------------------------*/
+int16_t clcd20x4::printf(const char *format, ...) {
+	int8_t buffer[20*4];
+	int16_t retval;
+	va_list args;
+
+	va_start(args, format);
+	vsnprintf((char*)buffer, 80, format, args);
+	va_end(args);
+
+	/* print buffer to lcd */
+	retval = puts(buffer);
+
+	return retval;
+}
+
+/*----------------------------Private functions-------------------------------*/
 void clcd20x4::wait_for_lcd(void) {
 	GPIO_InitTypeDef gpio_init_s;
 	gpio_init_s.GPIO_Pin = DB7_pin;
 	gpio_init_s.GPIO_Speed = DB7_speed;
 
 	/* wait at least 80us before checking BF */
-	delay_us (100);
+	delay_us(80);
+
+	/* init DB7 to input */
+	gpio_init_s.GPIO_Mode = DB7_mode[in];
+	GPIO_Init(DB7_port, &gpio_init_s);
 
 	/* check BF */
 	cmd ? GPIO_SetBits(RS_port, RS_pin) : GPIO_ResetBits(RS_port, RS_pin);
 	read ? GPIO_SetBits(RW_port, RW_pin) : GPIO_ResetBits(RW_port, RW_pin);
 
-	/* init DB7 to input */
-	gpio_init_s.GPIO_Mode = GPIO_Mode_IN_FLOATING;
-	GPIO_Init(DB7_port, &gpio_init_s);
+	/* addition delay */
+	delay_us(1);
 
 	while (1){
 		/* EN = 1 */
 		GPIO_SetBits(EN_port, EN_pin);
 
 		/* Tpw = 480 ns */
-		delay_us (1);
+		delay_us(1);
 
 		/* check BF */
 		if(GPIO_ReadInputDataBit(DB7_port, DB7_pin) == 0){
@@ -198,51 +321,29 @@ void clcd20x4::wait_for_lcd(void) {
 
 		/* EN = 0 */
 		GPIO_ResetBits(EN_port, EN_pin);
-		/* BF is on pin D7 */
 	}/* end while : cLCD is ready */
 
+	/* EN = 0 */
+	GPIO_ResetBits(EN_port, EN_pin);
+
 	/* init DB7 to output */
-	gpio_init_s.GPIO_Mode = GPIO_Mode_Out_PP;
+	gpio_init_s.GPIO_Mode = DB7_mode[out];
 	GPIO_Init(DB7_port, &gpio_init_s);
 }
 
 /*----------------------------------------------------------------------------*/
 void clcd20x4::send_byte(uint8_t RS, uint8_t RW, uint8_t D7D0) {
-
 	/* wait for lcd is not busy */
 	wait_for_lcd();
 
-	RS ? GPIO_SetBits(RS_port, RS_pin) : GPIO_ResetBits(RS_port, RS_pin);
-	RW ? GPIO_SetBits(RW_port, RW_pin) : GPIO_ResetBits(RW_port, RW_pin);
-
-	/* Send 4 MSB bits D7-D4 */
-	GPIO_SetBits(EN_port, EN_pin);
-
-	((D7D0 & 0x80) >> 7) ? GPIO_SetBits(DB7_port, DB7_pin) : GPIO_ResetBits(DB7_port, DB7_pin);
-	((D7D0 & 0x40) >> 6) ? GPIO_SetBits(DB6_port, DB6_pin) : GPIO_ResetBits(DB6_port, DB6_pin);
-	((D7D0 & 0x20) >> 5) ? GPIO_SetBits(DB5_port, DB5_pin) : GPIO_ResetBits(DB5_port, DB5_pin);
-	((D7D0 & 0x10) >> 4) ? GPIO_SetBits(DB4_port, DB4_pin) : GPIO_ResetBits(DB4_port, DB4_pin);
-
-	GPIO_ResetBits(EN_port, EN_pin);
-
-	/* tEC > 1.2 us */
-	delay_us(10);
-
-	/* Send next 4 bits D3-D0 */
-	GPIO_SetBits(EN_port, EN_pin);
-
-	((D7D0 & 0x08) >> 3) ? GPIO_SetBits(DB7_port, DB7_pin) : GPIO_ResetBits(DB7_port, DB7_pin);
-	((D7D0 & 0x04) >> 2) ? GPIO_SetBits(DB6_port, DB6_pin) : GPIO_ResetBits(DB6_port, DB6_pin);
-	((D7D0 & 0x02) >> 1) ? GPIO_SetBits(DB5_port, DB5_pin) : GPIO_ResetBits(DB5_port, DB5_pin);
-	(D7D0 & 0x01) ? GPIO_SetBits(DB4_port, DB4_pin) : GPIO_ResetBits(DB4_port, DB4_pin);
-
-	GPIO_ResetBits(EN_port, EN_pin);
+	/* send data */
+	send_byte_wowait(RS, RW, D7D0);
 }
 
 /*----------------------------------------------------------------------------*/
 void clcd20x4::init_lcd(void) {
 	/* wait for >40ms */
-	delay_ms(200);
+	delay_us(100000);
 
 	/* send function set 1 */
 	send_4bit(cmd, write, 0x30);
@@ -250,23 +351,26 @@ void clcd20x4::init_lcd(void) {
 	delay_us(50);
 
 	/* send  function set 2 */
-	send_4bit(cmd, write, cLCD_cmd_FS_4bit_2line);
+	send_byte_wowait(cmd, write, cLCD_cmd_FS_4bit_2line);
 	/* wait for >37us */
-	delay_us (50);
+	delay_us(50);
 
 	/* send  function set 3 */
-	send_byte_init(cmd, write, cLCD_cmd_FS_4bit_2line);
+	send_byte_wowait(cmd, write, cLCD_cmd_FS_4bit_2line);
 	/* wait for > 37us */
-	delay_us (50);
+	delay_us(50);
 
 	/* send display control, Display on */
-	send_byte_init(cmd, write, cLCD_cmd_D_on);
+	send_byte(cmd, write, cLCD_cmd_D_on);
 
 	/* send display clear, clear all DDRAM to 20H, set DDRAM address to 0 from AC */
 	send_byte(cmd, write, cLCD_cmd_ClearDisplay);
 
 	/* send Entry mode set, AC++ */
 	send_byte(cmd, write, cLCD_cmd_EntryMode_inc);
+
+	/* additional delay */
+	delay_us(1000);
 }
 
 /*----------------------------------------------------------------------------*/
@@ -274,6 +378,9 @@ void clcd20x4::send_4bit(uint8_t RS, uint8_t RW, uint8_t D7D4) {
 
 	RS ? GPIO_SetBits(RS_port, RS_pin) : GPIO_ResetBits(RS_port, RS_pin);
 	RW ? GPIO_SetBits(RW_port, RW_pin) : GPIO_ResetBits(RW_port, RW_pin);
+
+	/* addition delay */
+	delay_us(1);
 
 	/* EN = 1 */
 	GPIO_SetBits(EN_port, EN_pin);
@@ -284,14 +391,20 @@ void clcd20x4::send_4bit(uint8_t RS, uint8_t RW, uint8_t D7D4) {
 	((D7D4 & 0x20) >> 5) ? GPIO_SetBits(DB5_port, DB5_pin) : GPIO_ResetBits(DB5_port, DB5_pin);
 	((D7D4 & 0x10) >> 4) ? GPIO_SetBits(DB4_port, DB4_pin) : GPIO_ResetBits(DB4_port, DB4_pin);
 
+	/* addition delay */
+	delay_us(1);
+
 	/* EN = 0 */
 	GPIO_ResetBits(EN_port, EN_pin);
 }
 
 /*----------------------------------------------------------------------------*/
-void clcd20x4::send_byte_init(uint8_t RS, uint8_t RW, uint8_t D7D0) {
+void clcd20x4::send_byte_wowait(uint8_t RS, uint8_t RW, uint8_t D7D0) {
 	RS ? GPIO_SetBits(RS_port, RS_pin) : GPIO_ResetBits(RS_port, RS_pin);
 	RW ? GPIO_SetBits(RW_port, RW_pin) : GPIO_ResetBits(RW_port, RW_pin);
+
+	/* addition delay */
+	delay_us(1);
 
 	/* Send 4 MSB bits D7-D4 */
 	GPIO_SetBits(EN_port, EN_pin);
@@ -301,10 +414,13 @@ void clcd20x4::send_byte_init(uint8_t RS, uint8_t RW, uint8_t D7D0) {
 	((D7D0 & 0x20) >> 5) ? GPIO_SetBits(DB5_port, DB5_pin) : GPIO_ResetBits(DB5_port, DB5_pin);
 	((D7D0 & 0x10) >> 4) ? GPIO_SetBits(DB4_port, DB4_pin) : GPIO_ResetBits(DB4_port, DB4_pin);
 
+	/* addition delay */
+	delay_us(1);
+
 	GPIO_ResetBits(EN_port, EN_pin);
 
 	/* tEC > 1.2 us */
-	delay_us(10);
+	delay_us(2);
 
 	/* Send next 4 bits D3-D0 */
 	GPIO_SetBits(EN_port, EN_pin);
@@ -313,6 +429,9 @@ void clcd20x4::send_byte_init(uint8_t RS, uint8_t RW, uint8_t D7D0) {
 	((D7D0 & 0x04) >> 2) ? GPIO_SetBits(DB6_port, DB6_pin) : GPIO_ResetBits(DB6_port, DB6_pin);
 	((D7D0 & 0x02) >> 1) ? GPIO_SetBits(DB5_port, DB5_pin) : GPIO_ResetBits(DB5_port, DB5_pin);
 	(D7D0 & 0x01) ? GPIO_SetBits(DB4_port, DB4_pin) : GPIO_ResetBits(DB4_port, DB4_pin);
+
+	/* addition delay */
+	delay_us(1);
 
 	GPIO_ResetBits(EN_port, EN_pin);
 }
@@ -374,22 +493,11 @@ void clcd20x4::init_gpios(void) {
 }
 
 /*----------------------------------------------------------------------------*/
-void clcd20x4::delay_ms(uint16_t n) {
-	StatusType result;
-
-	result = CoTimeDelay(0, 0, 0, n);
-
-	if (result != E_OK) {
-		CLCD20x4_PRINTF("In delay_ms, result != OK");
-	}
-}
-
-/*----------------------------------------------------------------------------*/
 void clcd20x4::delay_us(uint32_t n) {
 	uint32_t num_of_clockcycles = SystemCoreClock/1000000 * n;
 	uint32_t count;
 
 	for (count = 0; count < num_of_clockcycles; count++) {
-		;
+		__asm__ __volatile__("nop");
 	}
 }
