@@ -114,6 +114,7 @@ const bool MB1_conf_btnProcessing_isUsed = true;
 
 /**< others */
 const bool MB1_conf_bugsFix_isUsed = true;
+const bool MB1_conf_JTAG_isntUsed = true;
 const bool MB1_conf_NJTRST_isntUsed = true;
 /**< others */
 
@@ -123,9 +124,15 @@ void MB1_system_init (void){
     /**< others */
     if (MB1_conf_bugsFix_isUsed)
         bugs_fix ();
-    if (MB1_conf_NJTRST_isntUsed){
-        RCC_APB2PeriphClockCmd (RCC_APB2Periph_GPIOB | RCC_APB2Periph_AFIO, ENABLE);
-        GPIO_PinRemapConfig (GPIO_Remap_SWJ_NoJTRST , ENABLE);
+    if (MB1_conf_JTAG_isntUsed) {
+    	RCC_APB2PeriphClockCmd (RCC_APB2Periph_GPIOB | RCC_APB2Periph_AFIO, ENABLE);
+    	GPIO_PinRemapConfig (GPIO_Remap_SWJ_JTAGDisable , ENABLE);
+    }
+    else{
+		if (MB1_conf_NJTRST_isntUsed){
+			RCC_APB2PeriphClockCmd (RCC_APB2Periph_GPIOB | RCC_APB2Periph_AFIO, ENABLE);
+			GPIO_PinRemapConfig (GPIO_Remap_SWJ_NoJTRST , ENABLE);
+		}
     }
 
     /**< end others */
