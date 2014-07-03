@@ -68,79 +68,79 @@ public class DetailActivity extends Activity {
 		
 		String htmlDetail = 
 				"<p><tt><b><font color=\"blue\"><u>Basic info</u>:</font></b></tt><br>"
-				+"_ Node ID: <font color=\"red\"><b>"+nID+"</b></font>.<br>"
-				+"_ Patient's ID: <font color=\"red\"><b>"+pID+"</b></font>.<br>"
-				+"_ Name: <font color=\"red\"><b>"+name+"</b></font>."
+				+"_ Node ID: <b><font color=\"red\">"+nID+"</font></b>.<br>"
+				+"_ Patient's ID: <b><font color=\"red\">"+pID+"</font></b>.<br>"
+				+"_ Name: <b><font color=\"red\">"+name+"</font></b>."
 				+"</p>"
 				//===============================================================//
 				+hrLine
 				
 				+"<p><tt><b><font color=\"blue\"><u>BP/HR data</u>:</font></b></tt><br>"
 				+"_ Most recently BP/HR:<br>"
-				+"<font color=\"red\"><b>"+dataSysBP[0]+"/"+dataDiasBP[0]+" </b></font><small>(mmHg)</small>, "
-				+"<font color=\"red\"><b>"+dataHR[0]+" </b></font><small>(pulses/min)</small>, "
-				+"<font color=\"red\"><b>"+dataTimeStamp[0]+"</b></font>."
+				+"<b><font color=\"red\">"+dataSysBP[0]+"</font>/<font color=\"blue\">"+dataDiasBP[0]+" </font></b><small>(mmHg)</small>, "
+				+"<b><font color=\"red\">"+dataHR[0]+" </font></b><small>(pulses/min)</small>, "
+				+"<b><font color=\"red\">"+dataTimeStamp[0]+"</font></b>."
 				+"</p>"
 				
 				+halfHrLine
 				
 				+"<p>_ Daily average BP/HR:<br>"
-				+"<font color=\"red\"><b>"+dataSysBP[1]+"/"+dataDiasBP[1]+" </b></font><small>(mmHg)</small>, "
-				+"<font color=\"red\"><b>"+dataHR[1]+" </b></font><small>(pulses/min)</small>."
+				+"<b><font color=\"red\">"+dataSysBP[1]+"</font>/<font color=\"blue\">"+dataDiasBP[1]+" </font></b><small>(mmHg)</small>, "
+				+"<b><font color=\"red\">"+dataHR[1]+" </font></b><small>(pulses/min)</small>."
 				+"</p>"
 				
 				+halfHrLine
 				
 				+"<p>_ Daily peak BP/HR:"
-				+"<ul><li>sys_BP <small>(mmHg)</small>: <font color=\"red\"><b>"+dataSysBP[2]+" </b></font><br>"
-				+ "(<font color=\"red\"><b>"+dataTimeStamp[1]+"</b></font>).</li>"
-				+"<li>dias_BP <small>(mmHg)</small>: <font color=\"red\"><b>"+dataDiasBP[2]+" </b></font><br>"
-				+ "(<font color=\"red\"><b>"+dataTimeStamp[2]+"</b></font>).</li>"
-				+"<li>HR <small>(pulses/min)</small>: <font color=\"red\"><b>"+dataHR[2]+" </b></font><br>"
-				+ "(<font color=\"red\"><b>"+dataTimeStamp[3]+"</b></font>).</li></ul>"
+				+"<ul><li>sys_BP <small>(mmHg)</small>: <b><font color=\"red\">"+dataSysBP[2]+" </font></b><br>"
+				+ "(<b><font color=\"red\">"+dataTimeStamp[1]+"</font></b>).</li>"
+				+"<li>dias_BP <small>(mmHg)</small>: <b><font color=\"red\">"+dataDiasBP[2]+" </font></b><br>"
+				+ "(<b><font color=\"red\">"+dataTimeStamp[2]+"</font></b>).</li>"
+				+"<li>HR <small>(pulses/min)</small>: <b><font color=\"red\">"+dataHR[2]+" </font></b><br>"
+				+ "(<b><font color=\"red\">"+dataTimeStamp[3]+"</font></b>).</li></ul>"
 				+"</p>"
 				
 				+halfHrLine
 				
 				+"<p>_ Weekly average BP/HR:<br>"
-				+"<font color=\"red\"><b>"+dataSysBP[3]+"/"+dataDiasBP[3]+" </b></font><small>(mmHg)</small>, "
-				+"<font color=\"red\"><b>"+dataHR[3]+" </b></font><small>(pulses/min)</small>."
+				+"<b><font color=\"red\">"+dataSysBP[3]+"</font>/<font color=\"blue\">"+dataDiasBP[3]+" </font></b><small>(mmHg)</small>, "
+				+"<b><font color=\"red\">"+dataHR[3]+" </font></b><small>(pulses/min)</small>."
 				+"</p>"
 				
 				+halfHrLine
 				
 				+"<p>_ Weekly peak BP/HR:"
-				+"<ul><li>sys_BP <small>(mmHg)</small>: <font color=\"red\"><b>"+dataSysBP[4]+" </b></font><br>"
-				+ "(<font color=\"red\"><b>"+dataTimeStamp[4]+"</b></font>).</li>"
-				+"<li>dias_BP <small>(mmHg)</small>: <font color=\"red\"><b>"+dataDiasBP[4]+" </b></font><br>"
-				+ "(<font color=\"red\"><b>"+dataTimeStamp[5]+"</b></font>).</li>"
-				+"<li>HR <small>(pulses/min)</small>: <font color=\"red\"><b>"+dataHR[4]+" </b></font><br>"
-				+ "(<font color=\"red\"><b>"+dataTimeStamp[6]+"</b></font>).</li></ul>"
+				+"<ul><li>sys_BP <small>(mmHg)</small>: <b><font color=\"red\">"+dataSysBP[4]+" </font></b><br>"
+				+ "(<b><font color=\"red\">"+dataTimeStamp[4]+"</font></b>).</li>"
+				+"<li>dias_BP <small>(mmHg)</small>: <b><font color=\"red\">"+dataDiasBP[4]+" </font></b><br>"
+				+ "(<b><font color=\"red\">"+dataTimeStamp[5]+"</font></b>).</li>"
+				+"<li>HR <small>(pulses/min)</small>: <b><font color=\"red\">"+dataHR[4]+" </font></b><br>"
+				+ "(<b><font color=\"red\">"+dataTimeStamp[6]+"</font></b>).</li></ul>"
 				+"</p>"
 				
 				+halfHrLine
 				
 				+"<p>_ Monthly average BP/HR:<br>"
-				+"<font color=\"red\"><b>"+dataSysBP[5]+"/"+dataDiasBP[5]+" </b></font><small>(mmHg)</small>, "
-				+"<font color=\"red\"><b>"+dataHR[5]+" </b></font><small>(pulses/min)</small>."
+				+"<b><font color=\"red\">"+dataSysBP[5]+"</font>/<font color=\"blue\">"+dataDiasBP[5]+" </font></b><small>(mmHg)</small>, "
+				+"<b><font color=\"red\">"+dataHR[5]+" </font></b><small>(pulses/min)</small>."
 				+"</p>"
 				
 				+halfHrLine
 				
 				+"<p>_ Monthly peak BP/HR:"
-				+"<ul><li>sys_BP <small>(mmHg)</small>: <font color=\"red\"><b>"+dataSysBP[6]+" </b></font><br>"
-				+ "(<font color=\"red\"><b>"+dataTimeStamp[7]+"</b></font>).</li>"
-				+"<li>dias_BP <small>(mmHg)</small>: <font color=\"red\"><b>"+dataDiasBP[6]+" </b></font><br>"
-				+ "(<font color=\"red\"><b>"+dataTimeStamp[8]+"</b></font>).</li>"
-				+"<li>HR <small>(pulses/min)</small>: <font color=\"red\"><b>"+dataHR[6]+" </b></font><br>"
-				+ "(<font color=\"red\"><b>"+dataTimeStamp[9]+"</b></font>).</li></ul>"
+				+"<ul><li>sys_BP <small>(mmHg)</small>: <b><font color=\"red\">"+dataSysBP[6]+" </font></b><br>"
+				+ "(<b><font color=\"red\">"+dataTimeStamp[7]+"</font></b>).</li>"
+				+"<li>dias_BP <small>(mmHg)</small>: <b><font color=\"red\">"+dataDiasBP[6]+" </font></b><br>"
+				+ "(<b><font color=\"red\">"+dataTimeStamp[8]+"</font></b>).</li>"
+				+"<li>HR <small>(pulses/min)</small>: <b><font color=\"red\">"+dataHR[6]+" </font></b><br>"
+				+ "(<b><font color=\"red\">"+dataTimeStamp[9]+"</font></b>).</li></ul>"
 				+"</p>"
 				//===============================================================//
 				+hrLine
 				
 				+"<p><tt><b><font color=\"blue\"><u>Height data</u>:</font></b></tt><br>"
-				+"_ Most recently height <small>(cm)</small>: <font color=\"red\"><b>"+recentlyHeight+"</b></font><br>"
-				+ "(<font color=\"red\"><b>"+dataTimeStamp[10]+"</b></font>)."
+				+"_ Most recently height <small>(cm)</small>: <b><font color=\"red\">"+recentlyHeight+"</font></b><br>"
+				+ "(<b><font color=\"red\">"+dataTimeStamp[10]+"</font></b>)."
 				+"</p>"
 				//===============================================================//
 				+hrLine

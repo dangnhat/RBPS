@@ -26,7 +26,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.webkit.WebView;
+import android.webkit.WebChromeClient.CustomViewCallback;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
@@ -334,11 +334,11 @@ public class MainActivity extends Activity {
 	public void detailNode(View viewClick) {
 		if(conn) {
 			new socketWorker("").execute(detailCmd);
-			Intent activityIntent = new Intent(this, DetailActivity.class);
-			startActivity(activityIntent);
+			
 		}else
 			notifyToast("No connection. Please connect again!", Toast.LENGTH_SHORT);
-		
+		Intent activityIntent = new Intent(this, DetailActivity.class);
+		startActivity(activityIntent);
 		return;
 	}
 	
@@ -346,10 +346,12 @@ public class MainActivity extends Activity {
 	public void predict(View viewClick) {
 		if(conn) {
 			new socketWorker("").execute(predictCmd);
-			Intent activityIntent = new Intent(this, PredictActivity.class);
-			startActivity(activityIntent);
+			
 		}else
 			notifyToast("No connection. Please connect again!", Toast.LENGTH_SHORT);
+		
+		Intent activityIntent = new Intent(this, PredictActivity.class);
+		startActivity(activityIntent);
 		
 		return;		
 	}

@@ -41,7 +41,7 @@ public class PredictActivity extends Activity {
 				+"<p><tt><b><font color=\"blue\"><u>Prediction data</u>:</font></b></tt><br>"
 				+"_ Risk of prehypertension: <font color=\"green\">"+riskPrehyper+"</font>.<br>"
 				
-				+"_ Monthly average BP <small>(mmHg)</small>: <font color=\"green\">"+monthlyAvgSysBp+"/"+monthlyAvgDiasBp+"</font><br>"
+				+"_ Monthly average BP <small>(mmHg)</small>: <font color=\"green\">"+monthlyAvgSysBp+"</font>/<font color=\"blue\">"+monthlyAvgDiasBp+"</font><br>"
 				+tab+emptyBox+" Sys_BP > <b>135</b>mmHg?<br>"
 				+tab+emptyBox+" Dias_BP > <b>85</b>mmHg?<br>"
 				
