@@ -37,79 +37,103 @@ import android.widget.Toast;
 
 public class MainActivity extends Activity {
 	public static Socket clientSocket;
-	public static String DATA;
+	public static String DATA; //frame.
 	
+	/* Parameters of socket */
 	private final int SERVER_PORT = 9999;
 	private final String SERVER_IP_DEFAULT = "192.168.150.1";
 	private static String SERVER_IP = "";
-	private final String scanCmd = "1";
+	
+	/* List of commands */
+	private final String scanCmd = "01";
 	private final String measureCmd = "2";
 	private final String detailCmd = "3";
 	private final String predictCmd = "4";
 	private final String scheduleCmd = "5";
 	private final String newScheduleCmd = "11";
 	private final String clearScheduleCmd = "12";
+	
 	private static boolean useIpDefault = true;
 	private static boolean conn = false;
 	
+	/* Create monitor to synchronize two threads */
+	class MonitorObject {}
+	MonitorObject monitorObject = new MonitorObject();
+	
+	/* Handle msg from threads and update view */
 	private Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
-        	Log.d("obj", (String)msg.obj);
-        	String name = "<p>"+(String)msg.obj+"</p>";
-        	ListView topoView = (ListView)findViewById(R.id.viewTopo);
-    		WebView wv = new WebView(MainActivity.this);
-    		ArrayList<WebView> list = new ArrayList<WebView>();
-    		wv.loadData(name, "text/html", "UTF-8");
-    		
-    		list.add(wv);
-    		list.add(wv);
-//    		list.add("Node ID: 1\tPatient's ID: 1\n\t"+name);
-//    		list.add("Node ID: 2\tPatient's ID: 2\n\tNguyen Van Hien");
-
-    		ArrayAdapter<WebView> adapter = new ArrayAdapter<WebView>(MainActivity.this, android.R.layout.simple_list_item_1,list);
-    		topoView.setAdapter(adapter);
-    		topoView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-
-    			@Override
-    			public void onItemClick(AdapterView<?> parent,
-    					View view, int position, long id) {
-    				// TODO Auto-generated method stub
-    				
-    				for(int i = 0; i < parent.getChildCount(); i++) {
-    					parent.getChildAt(i).setBackgroundColor(Color.WHITE);
-    				}
-    				view.setBackgroundColor(Color.CYAN);
-    			}
-    		});
+        	if(msg.what == 3) {
+        		notifyToast("Waked up", Toast.LENGTH_SHORT);
+        	}else if(msg.what == 2) {
+        		notifyToast("Streams error. Please connect again!", Toast.LENGTH_SHORT);
+        	}else {
+	        	String name = (String)msg.obj;
+	        	ListView topoView = (ListView)findViewById(R.id.viewTopo);
+	        	
+	    		ArrayList<String> list = new ArrayList<String>();
+	    	
+	    		list.add("Node ID: 1\tPatient's ID: 1\n\t"+name+"\nnvhien");
+	    		list.add("Node ID: 2\tPatient's ID: 2\n\tNguyen Van Hien");
+	    		
+	    		ArrayAdapter<String> adapter = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_list_item_1,list);
+	    		topoView.setAdapter(adapter);
+	    		topoView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+	
+	    			@Override
+	    			public void onItemClick(AdapterView<?> parent,
+	    					View view, int position, long id) {
+	    				
+	    				for(int i = 0; i < parent.getChildCount(); i++) {
+	    					parent.getChildAt(i).setBackgroundColor(Color.WHITE);
+	    				}
+	    				view.setBackgroundColor(Color.CYAN);
+	    			}
+	    		});
+        	}
     	}
     }; 
 	
-    /* Always connect to sever */
+    /* Always connect to server */
 	private Thread background = new Thread(new Runnable() {
-		
 		@Override
 		public void run() {
 			/* Transfer data */
-			try{
-	        	PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-	        	BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-	            
-	        	out.println(scanCmd);
-	        	
-	            String line = "";
-	            String result = "";
-	            while(true) {
-	            	line = in.readLine().toString();
-	            	if(line.equalsIgnoreCase("end")) break;
-	            	result += line;
-	            }
-	            Message msg = handler.obtainMessage(1, (Object)result);
-	            handler.sendMessage(msg);
-	        }catch(Exception e) {
-		        Log.d("inout", "err");
-	            e.printStackTrace();
-	        }
+			while(true) {
+				if(!conn) {
+					synchronized(monitorObject) {
+						try {
+							monitorObject.wait();
+							Message msg = handler.obtainMessage(3);
+				            handler.sendMessage(msg);
+						} catch (InterruptedException e1) {
+							e1.printStackTrace();
+						}
+					}
+				}else {
+					try{
+			        	PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+			        	BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+			            
+			        	out.println(scanCmd);
+			        	
+			            String line = "";
+			            String result = "";
+			            while(conn) {
+			            	line = in.readLine().toString();
+			            	if(line.equalsIgnoreCase("end")) break;
+			            	result += line;
+			            }
+			            Message msg = handler.obtainMessage(1, (Object)result);
+			            handler.sendMessage(msg);
+			        }catch(Exception e) {
+			        	Message msg = handler.obtainMessage(2);
+			            handler.sendMessage(msg);
+			            e.printStackTrace();
+			        }
+				}
+			}
 		}
 	});
     
@@ -119,19 +143,9 @@ public class MainActivity extends Activity {
 		setContentView(R.layout.activity_main);
 		
 		/* Try to connecting to the server */
-		try {
-			clientSocket = new Socket();
-			clientSocket.bind(null);
-			clientSocket.connect((new InetSocketAddress(SERVER_IP_DEFAULT, SERVER_PORT)), 10000);
-        }catch(Exception e) {
-        	conn = false;
-        	Toast.makeText(MainActivity.this, "Can not connect!", Toast.LENGTH_SHORT).show();
-            e.printStackTrace();
-            return;
-        }	
-		conn = true;
-		
-		/* Run the background thread */
+		conn = tryConnect(useIpDefault, SERVER_IP_DEFAULT, SERVER_IP);
+
+		/* Always run the background thread */
 		background.start();
 	}
 	
@@ -139,11 +153,12 @@ public class MainActivity extends Activity {
 	protected void onDestroy() {
         super.onDestroy();
         try {
+        	conn = false;
 			clientSocket.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-        Toast.makeText(getApplicationContext(),"Closed!", Toast.LENGTH_SHORT).show();
+        notifyToast("Closed!", Toast.LENGTH_SHORT);
     }
 
 	@Override
@@ -195,26 +210,53 @@ public class MainActivity extends Activity {
 			public void onClick(DialogInterface dialog, int whichButton) {
 				Editable value = input.getText();
 				SERVER_IP = String.valueOf(value);
+				
+				/* Check validation of the new IP */
 				if(IP_ADDRESS.matcher(SERVER_IP).matches()) {
-					Toast.makeText(MainActivity.this, "Use the new IP address!", Toast.LENGTH_SHORT).show();
+					notifyToast("Use the new IP address!", Toast.LENGTH_SHORT);
 					useIpDefault = false;
 				}else {
-					Toast.makeText(MainActivity.this, "Invalid IP address! Use default IP.", Toast.LENGTH_SHORT).show();
+					notifyToast("Invalid IP address! Use default IP.", Toast.LENGTH_SHORT);
 					useIpDefault = true;
 				}
-				/* Reconnect */
+				
+				/* close socket before */
 				try {
-					clientSocket = new Socket();
-					clientSocket.bind(null);
-					if(useIpDefault)
-						clientSocket.connect((new InetSocketAddress(SERVER_IP_DEFAULT, SERVER_PORT)), 5000);
-					else
-						clientSocket.connect((new InetSocketAddress(SERVER_IP, SERVER_PORT)), 5000);
-					Toast.makeText(MainActivity.this, "Connected!", Toast.LENGTH_SHORT).show();
-		        }catch(Exception e) {
-		        	Toast.makeText(MainActivity.this, "Can not connect!", Toast.LENGTH_SHORT).show();
-		            e.printStackTrace();
-		        }
+					clientSocket.close();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				
+				/* Reconnect */
+				conn = tryConnect(useIpDefault, SERVER_IP_DEFAULT, SERVER_IP);
+				if(conn) {
+					synchronized (monitorObject) {
+						monitorObject.notify();
+					}
+				}
+			}
+		});
+		
+		alert.setNeutralButton("Default", new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int whichButton) {
+				notifyToast("Use default IP. Reconnecting.", Toast.LENGTH_SHORT);
+				useIpDefault = true;
+				input.setText("");
+				
+				/* close socket before */
+				try {
+					clientSocket.close();
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+				/* Reconnect */
+				conn = tryConnect(useIpDefault, SERVER_IP_DEFAULT, SERVER_IP);
+				if(conn) {
+					synchronized (monitorObject) {
+						monitorObject.notify();
+					}
+				}
 			}
 		});
 
@@ -231,27 +273,19 @@ public class MainActivity extends Activity {
 	
 	/* Handle action_reconnect option */
 	public void reconnect() {
+		/* close socket before */
 		try {
 			clientSocket.close();
 		} catch (IOException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-		try {
-			clientSocket = new Socket();
-			clientSocket.bind(null);
-			if(useIpDefault)
-				clientSocket.connect((new InetSocketAddress(SERVER_IP_DEFAULT, SERVER_PORT)), 5000);
-			else
-				clientSocket.connect((new InetSocketAddress(SERVER_IP, SERVER_PORT)), 5000);
-        }catch(Exception e) {
-        	Toast.makeText(MainActivity.this, "Can not connect!", Toast.LENGTH_SHORT).show();
-            e.printStackTrace();
-            return;
-        }
-		if(!conn) {
-			conn = true;
-			background.start();
+		
+		/* Reconnect */
+		conn = tryConnect(useIpDefault, SERVER_IP_DEFAULT, SERVER_IP);
+		if(conn) {
+			synchronized (monitorObject) {
+				monitorObject.notify();
+			}
 		}
 
 		return;
@@ -279,7 +313,7 @@ public class MainActivity extends Activity {
 		aboutUs.setView(scrView);
 		aboutUs.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int whichButton) {
-				Toast.makeText(MainActivity.this, "Thanks!", Toast.LENGTH_SHORT).show();
+				notifyToast("Thanks!", Toast.LENGTH_SHORT);
 			}
 		});
 		aboutUs.show();
@@ -291,7 +325,7 @@ public class MainActivity extends Activity {
 		if(conn) {
 			new socketWorker("").execute(measureCmd);
 		}else
-			Toast.makeText(MainActivity.this, "Please connect again!", Toast.LENGTH_SHORT).show();
+			notifyToast("No connection. Please connect again!", Toast.LENGTH_SHORT);
 		
 		return;
 	}
@@ -300,11 +334,10 @@ public class MainActivity extends Activity {
 	public void detailNode(View viewClick) {
 		if(conn) {
 			new socketWorker("").execute(detailCmd);
+			Intent activityIntent = new Intent(this, DetailActivity.class);
+			startActivity(activityIntent);
 		}else
-			Toast.makeText(MainActivity.this, "Please connect again!", Toast.LENGTH_SHORT).show();
-		
-		Intent activityIntent = new Intent(this, DetailActivity.class);
-		startActivity(activityIntent);
+			notifyToast("No connection. Please connect again!", Toast.LENGTH_SHORT);
 		
 		return;
 	}
@@ -313,11 +346,10 @@ public class MainActivity extends Activity {
 	public void predict(View viewClick) {
 		if(conn) {
 			new socketWorker("").execute(predictCmd);
+			Intent activityIntent = new Intent(this, PredictActivity.class);
+			startActivity(activityIntent);
 		}else
-			Toast.makeText(MainActivity.this, "Please connect again!", Toast.LENGTH_SHORT).show();
-		
-		Intent activityIntent = new Intent(this, PredictActivity.class);
-		startActivity(activityIntent);
+			notifyToast("No connection. Please connect again!", Toast.LENGTH_SHORT);
 		
 		return;		
 	}
@@ -326,16 +358,15 @@ public class MainActivity extends Activity {
 	public void schedule(View viewClick) {
 		if(conn) {
 			new socketWorker("").execute(scheduleCmd);
+			Intent activityIntent = new Intent(this, ScheduleActivity.class);
+			startActivity(activityIntent);
 		}else
-			Toast.makeText(MainActivity.this, "Please connect again!", Toast.LENGTH_SHORT).show();
-		
-		Intent activityIntent = new Intent(this, ScheduleActivity.class);
-		startActivity(activityIntent);
+			notifyToast("No connection. Please connect again!", Toast.LENGTH_SHORT);
 		
 		return;		
 	}
 		
-	/* Process transceiver */
+	/* Process transceiver when choosing buttons */
 	public class socketWorker extends AsyncTask<String, Void, String> {
 		private int errno = 0;
     	private ProgressDialog progDialog;
@@ -386,24 +417,49 @@ public class MainActivity extends Activity {
 	    protected void onPostExecute(String result) {
 			progDialog.dismiss();
 			if(errno == 1) { //Transfering error occur.
-				Toast.makeText(MainActivity.this, "Transfering error!", Toast.LENGTH_SHORT).show();
+				notifyToast("Transfering error! Please connect again!", Toast.LENGTH_SHORT);
 			}else {
-				Toast.makeText(MainActivity.this, "Done!", Toast.LENGTH_SHORT).show();
+				notifyToast("Done!", Toast.LENGTH_SHORT);
 				//TODO
 				Log.d("result", result);
 			}
 	    }
 	}
 	
+	/* Create a frame */
 	public String createDataFrame(String cmd, String data) {
 		String frame = "";
 		int lengthData = data.length();
-		if(cmd.equals(scheduleCmd))
-			frame += String.valueOf(lengthData) + cmd + data;
-		else
-			frame += cmd + data;
+		frame += String.valueOf(lengthData) + cmd + data;
 		
 		return frame;
 	}
+	
+	/* Try to connecting to server */
+	public boolean tryConnect(boolean useIpDefault, String defaultIP, String newIP) {
+		try {
+			clientSocket = new Socket();
+			clientSocket.bind(null);
+			if(useIpDefault)
+				clientSocket.connect((new InetSocketAddress(defaultIP, SERVER_PORT)), 10000);
+			else
+				clientSocket.connect((new InetSocketAddress(newIP, SERVER_PORT)), 10000);
+        }catch(Exception e) {
+        	notifyToast("Can not connect!", Toast.LENGTH_SHORT);
+            e.printStackTrace();
+            
+            return false;
+        }
+		notifyToast("Connected!", Toast.LENGTH_SHORT);
+		
+		return true;
+	}
 
+	/* Toast */
+	public void notifyToast(String noice, int timeShow) {
+		Toast.makeText(getApplicationContext(), noice, timeShow).show();
+		
+		return;
+	}
+	
 }
