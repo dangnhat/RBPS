@@ -55,6 +55,8 @@ public class MainActivity extends Activity {
 	
 	private static boolean useIpDefault = true;
 	private static boolean conn = false;
+	private ArrayList<NodeInfo> arrayNode;
+	private CustomListAdapter arrNodeAdapter;
 	
 	/* Create monitor to synchronize two threads */
 	class MonitorObject {}
@@ -136,6 +138,11 @@ public class MainActivity extends Activity {
 			}
 		}
 	});
+	
+	public void addNode(NodeInfo node) {
+		arrayNode.add(0, node);
+		arrNodeAdapter.notifyDataSetChanged();
+	}
     
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -146,7 +153,36 @@ public class MainActivity extends Activity {
 		conn = tryConnect(useIpDefault, SERVER_IP_DEFAULT, SERVER_IP);
 
 		/* Always run the background thread */
-		background.start();
+//		background.start();
+		
+		ListView topoView = (ListView)findViewById(R.id.viewTopo);
+
+		arrayNode = new ArrayList<NodeInfo>();
+		arrNodeAdapter = new CustomListAdapter(this, R.layout.list_view, arrayNode);
+		topoView.setAdapter(arrNodeAdapter);
+		
+		NodeInfo nInfo = new NodeInfo("1", "1", "Abc");
+		nInfo.setBpValue("110/66");
+		nInfo.setHrValue("77");
+		nInfo.setTimestamp("12h30");
+		this.addNode(nInfo);
+		
+		this.addNode(nInfo = new NodeInfo("2", "2", "XXX"));
+		nInfo.setBpValue("113/68");
+		nInfo.setHrValue("79");
+		nInfo.setTimestamp("15h30");
+//		topoView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+//
+//			@Override
+//			public void onItemClick(AdapterView<?> parent,
+//					View view, int position, long id) {
+//				
+//				for(int i = 0; i < parent.getChildCount(); i++) {
+//					parent.getChildAt(i).setBackgroundColor(Color.WHITE);
+//				}
+//				view.setBackgroundColor(Color.CYAN);
+//			}
+//		});
 	}
 	
 	@Override
