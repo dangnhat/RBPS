@@ -22,28 +22,28 @@
 
 /*--------------------------- Config interface -------------------------------*/
 GPIO_TypeDef *RS_port = GPIOB;
-const uint16_t RS_pin = GPIO_Pin_9;
+const uint16_t RS_pin = GPIO_Pin_4;
 GPIOMode_TypeDef RS_mode = GPIO_Mode_Out_PP;
 GPIOSpeed_TypeDef RS_speed = GPIO_Speed_2MHz;
 const uint32_t RS_RCC = RCC_APB2Periph_GPIOB;
 
 GPIO_TypeDef *RW_port = GPIOB;
-const uint16_t RW_pin = GPIO_Pin_8;
+const uint16_t RW_pin = GPIO_Pin_5;
 GPIOMode_TypeDef RW_mode = GPIO_Mode_Out_PP;
 GPIOSpeed_TypeDef RW_speed = GPIO_Speed_2MHz;
 const uint32_t RW_RCC = RCC_APB2Periph_GPIOB;
 
 GPIO_TypeDef *EN_port = GPIOB;
-const uint16_t EN_pin = GPIO_Pin_7;
+const uint16_t EN_pin = GPIO_Pin_11;
 GPIOMode_TypeDef EN_mode = GPIO_Mode_Out_PP;
 GPIOSpeed_TypeDef EN_speed = GPIO_Speed_2MHz;
 const uint32_t EN_RCC = RCC_APB2Periph_GPIOB;
 
-GPIO_TypeDef *DB4_port = GPIOA;
-const uint16_t DB4_pin = GPIO_Pin_15;
+GPIO_TypeDef *DB4_port = GPIOB;
+const uint16_t DB4_pin = GPIO_Pin_10;
 GPIOMode_TypeDef DB4_mode = GPIO_Mode_Out_PP;
 GPIOSpeed_TypeDef DB4_speed = GPIO_Speed_2MHz;
-const uint32_t DB4_RCC = RCC_APB2Periph_GPIOA;
+const uint32_t DB4_RCC = RCC_APB2Periph_GPIOB;
 
 GPIO_TypeDef *DB5_port = GPIOB;
 const uint16_t DB5_pin = GPIO_Pin_3;
@@ -51,17 +51,17 @@ GPIOMode_TypeDef DB5_mode = GPIO_Mode_Out_PP;
 GPIOSpeed_TypeDef DB5_speed = GPIO_Speed_2MHz;
 const uint32_t DB5_RCC = RCC_APB2Periph_GPIOB;
 
-GPIO_TypeDef *DB6_port = GPIOB;
-const uint16_t DB6_pin = GPIO_Pin_10;
+GPIO_TypeDef *DB6_port = GPIOA;
+const uint16_t DB6_pin = GPIO_Pin_15;
 GPIOMode_TypeDef DB6_mode = GPIO_Mode_Out_PP;
 GPIOSpeed_TypeDef DB6_speed = GPIO_Speed_2MHz;
-const uint32_t DB6_RCC = RCC_APB2Periph_GPIOB;
+const uint32_t DB6_RCC = RCC_APB2Periph_GPIOA;
 
-GPIO_TypeDef *DB7_port = GPIOB;
-const uint16_t DB7_pin = GPIO_Pin_11;
+GPIO_TypeDef *DB7_port = GPIOC;
+const uint16_t DB7_pin = GPIO_Pin_10;
 GPIOMode_TypeDef DB7_mode[] = {GPIO_Mode_Out_PP, GPIO_Mode_IN_FLOATING}; //0 for output, 1 for input
 GPIOSpeed_TypeDef DB7_speed = GPIO_Speed_2MHz;
-const uint32_t DB7_RCC = RCC_APB2Periph_GPIOB;
+const uint32_t DB7_RCC = RCC_APB2Periph_GPIOC;
 
 void (*GPIOs_RCC_fp)(uint32_t, FunctionalState) = RCC_APB2PeriphClockCmd;
 
@@ -285,6 +285,27 @@ int16_t clcd20x4::printf(const char *format, ...) {
 	retval = puts(buffer);
 
 	return retval;
+}
+
+/*----------------------------------------------------------------------------*/
+void clcd20x4::gen_pattern(const uint8_t *pattern, uint8_t addr) {
+	uint16_t count;
+
+	/* check addr */
+	if (addr > 7) {
+		return;
+	}
+
+	/* send set CGRAM address command */
+	send_byte(cmd, write, (addr << 3) | 0x40);
+
+	/* send pattern */
+	for (count = 0; count < 8; count++) {
+		send_byte(data, write, pattern[count]);
+	}
+
+	/* set cursor to current state */
+	set_cursor(cur_line, cur_pos);
 }
 
 /*----------------------------Private functions-------------------------------*/

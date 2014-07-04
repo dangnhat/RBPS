@@ -80,6 +80,16 @@ public:
 	 */
 	void home(void);
 
+	/**
+	 * @brief   store a custom code generated pattern to CGRAM.
+	 *
+	 * @param[in]	pattern, an 8-elements array.
+	 * @param[in]	addr, DDRAM address for generated pattern; should be between 0 and 7.
+	 * 				(CGRAM address = addr << 3).
+	 *
+	 */
+	void gen_pattern(const uint8_t *pattern, uint8_t addr);
+
 private:
 
 	/* Private vars */

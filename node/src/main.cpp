@@ -97,6 +97,44 @@ void controller_task(void *param) {
  */
 void znp_task(void *param) {
 	clcd20x4 a_lcd;
+	const uint8_t pattern[8] = {0x0F, 0x00, 0x0F, 0x0F, 0x0, 0x0, 0xF, 0x0};
+	const uint8_t bat_100[8] = {0x0E, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F};
+	const uint8_t bat_lt66[8] = {0x0E, 0x1F, 0x11, 0x11, 0x1F, 0x1F, 0x1F, 0x1F};
+	const uint8_t bat_lt33[8] = {0x0E, 0x1F, 0x11, 0x11, 0x11, 0x1F, 0x1F, 0x1F};
+	const uint8_t bat_lt5[8] = {0x0E, 0x1F, 0x11, 0x11, 0x11, 0x11, 0x11, 0x1F};
+
+	a_lcd.putc(0x7F);
+	a_lcd.gen_pattern(pattern, 0);
+	a_lcd.gen_pattern(bat_100, 1);
+	a_lcd.gen_pattern(bat_lt66, 2);
+	a_lcd.gen_pattern(bat_lt33, 3);
+	a_lcd.gen_pattern(bat_lt5, 4);
+	a_lcd.putc(0);
+	a_lcd.putc(1);
+	a_lcd.putc(2);
+	a_lcd.putc(3);
+	a_lcd.putc(4);
+
+	/* test keypad */
+	GPIO_InitTypeDef gpio_init_s;
+	gpio_init_s.GPIO_Mode = GPIO_Mode_Out_PP;
+	gpio_init_s.GPIO_Speed = GPIO_Speed_10MHz;
+	gpio_init_s.GPIO_Pin = GPIO_Pin_0;
+
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
+	GPIO_Init(GPIOC, &gpio_init_s);
+
+	gpio_init_s.GPIO_Pin = GPIO_Pin_1;
+	GPIO_Init(GPIOC, &gpio_init_s);
+
+	GPIO_ResetBits(GPIOC, GPIO_Pin_0 | GPIO_Pin_1);
+
+	GPIO_SetBits(GPIOC, GPIO_Pin_0);
+
+	GPIO_SetBits(GPIOC, GPIO_Pin_1);
+
+	GPIO_ResetBits(GPIOC, GPIO_Pin_0);
+
 
 	while(1) {
 		printf("This is znp task\n");
