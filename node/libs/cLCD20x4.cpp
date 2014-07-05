@@ -3,7 +3,7 @@
  * @{
  *
  * @file        cLCD20x4.cpp
- * @brief       implementation of declared functions of object clcd20x4 class
+ * @brief       implementation of declared functions of clcd20x4 class
  *
  * @author      DangNhat Pham-Huu <51002279@hcmut.edu.vn>
  *
@@ -63,7 +63,7 @@ GPIOMode_TypeDef DB7_mode[] = {GPIO_Mode_Out_PP, GPIO_Mode_IN_FLOATING}; //0 for
 GPIOSpeed_TypeDef DB7_speed = GPIO_Speed_2MHz;
 const uint32_t DB7_RCC = RCC_APB2Periph_GPIOC;
 
-void (*GPIOs_RCC_fp)(uint32_t, FunctionalState) = RCC_APB2PeriphClockCmd;
+static void (*GPIOs_RCC_fp)(uint32_t, FunctionalState) = RCC_APB2PeriphClockCmd;
 
 /*--------------------- LCD-specific data, definitions -----------------------*/
 /* define cLCD's pin state */
@@ -242,20 +242,50 @@ void clcd20x4::home(void) {
 
 /*----------------------------------------------------------------------------*/
 void clcd20x4::putc(int8_t a_char) {
-	/* send data */
-	send_byte(data, write, a_char);
+	uint8_t tab_pos;
 
-	/* save state (only correct when in 2 line mode) */
-	cur_pos++;
-	if (cur_pos > 20) {
-		cur_pos = 1;
+	/* special characters */
+	switch (a_char) {
+	case '\n':
+		if (cur_line < 4) {
+			set_cursor(++cur_line, 1);
+		}
+		break;
 
-		cur_line = cur_line + 1;
-		if (cur_line == 5) {
-			cur_line = 1;
+	case '\t':
+		if (cur_pos % 2 == 0) {
+			tab_pos = cur_pos + 2;
+		}
+		else {
+			tab_pos = (cur_pos / 2 + 1) * 2;
 		}
 
-		set_cursor(cur_line, cur_pos);
+		if (tab_pos < 20) {
+			set_cursor(cur_line, tab_pos);
+		}
+		break;
+
+	case '\r':
+		set_cursor(cur_line, 1);
+		break;
+
+	default:
+		/* send data */
+		send_byte(data, write, a_char);
+
+		/* save state (only correct when in 2 line mode) */
+		cur_pos++;
+		if (cur_pos > 20) {
+			cur_pos = 1;
+
+			cur_line = cur_line + 1;
+			if (cur_line == 5) {
+				cur_line = 1;
+			}
+
+			set_cursor(cur_line, cur_pos);
+		}
+		break;
 	}
 }
 

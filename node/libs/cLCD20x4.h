@@ -86,10 +86,17 @@ public:
 	 * @param[in]	pattern, an 8-elements array.
 	 * @param[in]	addr, DDRAM address for generated pattern; should be between 0 and 7.
 	 * 				(CGRAM address = addr << 3).
-	 *
 	 */
 	void gen_pattern(const uint8_t *pattern, uint8_t addr);
 
+	/**
+	 * @brief   store a custom code generated pattern to CGRAM.
+	 *
+	 * @param[in]	pattern, an 8-elements array.
+	 * @param[in]	addr, DDRAM address for generated pattern; should be between 0 and 7.
+	 * 				(CGRAM address = addr << 3).
+	 */
+	void set_backlight_level(uint8_t percent); //TODO: implement this function.
 private:
 
 	/* Private vars */
@@ -152,4 +159,4 @@ private:
 
 
 /** @} */
-#endif //
+#endif // CLCD20x4_H_
