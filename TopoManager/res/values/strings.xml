@@ -11,7 +11,8 @@
     <string name="title_activity_measure">MeasureActivity</string>
     <string name="title_activity_predict">PredictActivity</string>
     <string name="title_activity_schedule">ScheduleActivity</string>
-    <string name="node_ID">Node ID: </string>
-    <string name="patient_ID">Patient ID: </string>
+    <string name="label_node_ID"><u>Node ID</u>: </string>
+    <string name="label_patient_ID"><u>Patient ID</u>: </string>
+    <string name="dotEnd">.</string>
 
 </resources>

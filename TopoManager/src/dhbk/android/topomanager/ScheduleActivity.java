@@ -7,7 +7,9 @@ import android.view.MenuItem;
 import android.view.View;
 
 public class ScheduleActivity extends Activity {
-
+	public final String newScheduleCmd = "11";
+	public final String clearScheduleCmd = "12";
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -16,7 +18,13 @@ public class ScheduleActivity extends Activity {
 	}
 	
 	public void apllyTime(View viewClick) {
-		
+//		if(MainActivity.conn) {
+//			/* Create a frame */
+//            
+//		}else
+//			Toast.makeText(ScheduleActivity.this, "No connection. Please connect again!", Toast.LENGTH_SHORT).show();
+		MainActivity.DATA = createDataFrame(newScheduleCmd, MainActivity.DATA);
+		new SocketWorker(MainActivity.DATA, getApplicationContext()).execute();
 		return;
 	}
 
@@ -38,6 +46,15 @@ public class ScheduleActivity extends Activity {
 			return true;
 		}
 		return super.onOptionsItemSelected(item);
+	}
+	
+	/* Create a frame */
+	public String createDataFrame(String cmd, String data) {
+		String frame = "";
+		int lengthData = data.length();
+		frame += String.valueOf(lengthData) + cmd + data;
+		
+		return frame;
 	}
 
 }

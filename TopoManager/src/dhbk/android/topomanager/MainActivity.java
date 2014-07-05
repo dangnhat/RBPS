@@ -26,7 +26,6 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.webkit.WebChromeClient.CustomViewCallback;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
@@ -37,7 +36,7 @@ import android.widget.Toast;
 
 public class MainActivity extends Activity {
 	public static Socket clientSocket;
-	public static String DATA; //frame.
+	public static String DATA = ""; //frame.
 	
 	/* Parameters of socket */
 	private final int SERVER_PORT = 9999;
@@ -45,16 +44,14 @@ public class MainActivity extends Activity {
 	private static String SERVER_IP = "";
 	
 	/* List of commands */
-	private final String scanCmd = "01";
-	private final String measureCmd = "2";
-	private final String detailCmd = "3";
-	private final String predictCmd = "4";
-	private final String scheduleCmd = "5";
-	private final String newScheduleCmd = "11";
-	private final String clearScheduleCmd = "12";
+	public final String scanCmd = "01";
+	public final String measureCmd = "2";
+	public final String detailCmd = "3";
+	public final String predictCmd = "4";
+	public final String scheduleCmd = "5";
 	
 	private static boolean useIpDefault = true;
-	private static boolean conn = false;
+	public static boolean conn = false;
 	private ArrayList<NodeInfo> arrayNode;
 	private CustomListAdapter arrNodeAdapter;
 	
@@ -140,15 +137,24 @@ public class MainActivity extends Activity {
 	});
 	
 	public void addNode(NodeInfo node) {
-		arrayNode.add(0, node);
+		arrayNode.add(node);
 		arrNodeAdapter.notifyDataSetChanged();
+		
+		return;
+	}
+	
+	public void removeNode(int index) {
+		arrayNode.remove(index);
+		arrNodeAdapter.notifyDataSetChanged();
+		
+		return;
 	}
     
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		
+
 		/* Try to connecting to the server */
 		conn = tryConnect(useIpDefault, SERVER_IP_DEFAULT, SERVER_IP);
 
@@ -159,30 +165,32 @@ public class MainActivity extends Activity {
 
 		arrayNode = new ArrayList<NodeInfo>();
 		arrNodeAdapter = new CustomListAdapter(this, R.layout.list_view, arrayNode);
+
 		topoView.setAdapter(arrNodeAdapter);
+		topoView.setBackgroundColor(Color.WHITE);
 		
-		NodeInfo nInfo = new NodeInfo("1", "1", "Abc");
-		nInfo.setBpValue("110/66");
+		NodeInfo nInfo = new NodeInfo("1", "1", "Pham Huu Dang Nhat");
+		nInfo.setBpValue("110", "68");
 		nInfo.setHrValue("77");
-		nInfo.setTimestamp("12h30");
+		nInfo.setDateAndTimestamp("0230", "04072014");
 		this.addNode(nInfo);
 		
-		this.addNode(nInfo = new NodeInfo("2", "2", "XXX"));
-		nInfo.setBpValue("113/68");
+		this.addNode(nInfo = new NodeInfo("2", "2", "Nguyen Van Hien"));
+		nInfo.setBpValue("113", "69");
 		nInfo.setHrValue("79");
-		nInfo.setTimestamp("15h30");
-//		topoView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-//
-//			@Override
-//			public void onItemClick(AdapterView<?> parent,
-//					View view, int position, long id) {
-//				
-//				for(int i = 0; i < parent.getChildCount(); i++) {
-//					parent.getChildAt(i).setBackgroundColor(Color.WHITE);
-//				}
-//				view.setBackgroundColor(Color.CYAN);
-//			}
-//		});
+		nInfo.setDateAndTimestamp("1530", "04072014");
+		topoView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+			@Override
+			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+//				notifyToast("clicked", Toast.LENGTH_SHORT);
+				
+				for(int i = 0; i < parent.getChildCount(); i++) {
+					parent.getChildAt(i).setBackgroundColor(Color.WHITE);
+				}
+				
+				view.setBackgroundResource(R.drawable.gradient_bg_hover);
+			}
+		});
 	}
 	
 	@Override
@@ -333,14 +341,17 @@ public class MainActivity extends Activity {
 		final TextView usView = new TextView(MainActivity.this);
 		ScrollView scrView = new ScrollView(MainActivity.this);
 		
-		String htmlParagraph = "<h3>Ho Chi Minh City University of Technology</h3>"
-							+ "<p><strong>Nguyen Van Hien</strong></p>"
-							+ "<p><a href=\"\">nvhien1992@gmail.com</></p>"
-							+ "<p><strong>Pham Huu Dang Nhat</strong></p>"
-							+ "<p><a href=\"\">phamhuudangnhat@gmail.com</></p>"
-							+ "<p><strong>Nguyen Viet Tien</strong></p>"
-							+ "<p><a href=\"\">viettien56@gmail.com</></p>";
+		String htmlParagraph = "<h3><font color=\"red\">Ho Chi Minh City University of Technology</font></h3>"
+							+ "<p><strong><font color=\"green\">Nguyen Van Hien</font></strong><br>"
+							+ "<a href=\"\">nvhien1992@gmail.com</></p>"
+							
+							+ "<p><strong><font color=\"green\">Pham Huu Dang Nhat</font></strong><br>"
+							+ "<a href=\"\">phamhuudangnhat@gmail.com</></p>"
+							
+							+ "<p><strong><font color=\"green\">Nguyen Viet Tien</font></strong><br>"
+							+ "<a href=\"\">viettien56@gmail.com</></p>";
 		
+		usView.setBackgroundColor(Color.BLACK);
 		usView.setText(Html.fromHtml(htmlParagraph));
 		usView.setTextColor(new ColorStateList(new int[][]{new int[]{}}, new int [] {Color.WHITE}));
 		scrView.addView(usView);
@@ -359,7 +370,9 @@ public class MainActivity extends Activity {
 	/* Handle Measure button click */
 	public void measure(View viewClick) {
 		if(conn) {
-			new socketWorker("").execute(measureCmd);
+			/* Create a frame */
+            DATA = createDataFrame(measureCmd, DATA);
+			new socketWorker(DATA).execute();
 		}else
 			notifyToast("No connection. Please connect again!", Toast.LENGTH_SHORT);
 		
@@ -369,7 +382,9 @@ public class MainActivity extends Activity {
 	/* Handle Detail button click */
 	public void detailNode(View viewClick) {
 		if(conn) {
-			new socketWorker("").execute(detailCmd);
+			/* Create a frame */
+            DATA = createDataFrame(detailCmd, DATA);
+			new socketWorker(DATA).execute();
 			
 		}else
 			notifyToast("No connection. Please connect again!", Toast.LENGTH_SHORT);
@@ -381,8 +396,9 @@ public class MainActivity extends Activity {
 	/* Handle Predict button click */
 	public void predict(View viewClick) {
 		if(conn) {
-			new socketWorker("").execute(predictCmd);
-			
+			/* Create a frame */
+            DATA = createDataFrame(predictCmd, DATA);
+			new socketWorker(DATA).execute();
 		}else
 			notifyToast("No connection. Please connect again!", Toast.LENGTH_SHORT);
 		
@@ -395,11 +411,16 @@ public class MainActivity extends Activity {
 	/* Handle Schedule button click */
 	public void schedule(View viewClick) {
 		if(conn) {
-			new socketWorker("").execute(scheduleCmd);
+			/* Create a frame */
+            DATA = createDataFrame(scheduleCmd, DATA);
+			new socketWorker(DATA).execute();
 			Intent activityIntent = new Intent(this, ScheduleActivity.class);
 			startActivity(activityIntent);
 		}else
 			notifyToast("No connection. Please connect again!", Toast.LENGTH_SHORT);
+		
+		Intent activityIntent = new Intent(this, ScheduleActivity.class);
+		startActivity(activityIntent);
 		
 		return;		
 	}
@@ -428,11 +449,8 @@ public class MainActivity extends Activity {
 	        	PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
 	        	BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 	            
-	            /* Create a frame */
-	            DATA = createDataFrame(params[0], data);
-	            
 	            /* Send frame to server */
-	            out.println(DATA);
+	            out.println(this.data);
 	            
 	            /* Read topology data from server */
 	            String line = "";
@@ -495,7 +513,7 @@ public class MainActivity extends Activity {
 
 	/* Toast */
 	public void notifyToast(String noice, int timeShow) {
-		Toast.makeText(getApplicationContext(), noice, timeShow).show();
+		Toast.makeText(getBaseContext(), noice, timeShow).show();
 		
 		return;
 	}
