@@ -16,7 +16,7 @@
 
 namespace ISRMgr_ns {
 
-const uint8_t numOfSubISR_max = 4;
+const uint8_t numOfSubISR_max = 8;
 
 typedef enum {
     successful,
