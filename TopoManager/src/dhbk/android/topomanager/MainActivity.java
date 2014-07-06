@@ -167,7 +167,6 @@ public class MainActivity extends Activity {
 		arrNodeAdapter = new CustomListAdapter(this, R.layout.list_view, arrayNode);
 
 		topoView.setAdapter(arrNodeAdapter);
-		topoView.setBackgroundColor(Color.WHITE);
 		
 		NodeInfo nInfo = new NodeInfo("1", "1", "Pham Huu Dang Nhat");
 		nInfo.setBpValue("110", "68");
@@ -179,13 +178,12 @@ public class MainActivity extends Activity {
 		nInfo.setBpValue("113", "69");
 		nInfo.setHrValue("79");
 		nInfo.setDateAndTimestamp("1530", "04072014");
+		
 		topoView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-//				notifyToast("clicked", Toast.LENGTH_SHORT);
-				
 				for(int i = 0; i < parent.getChildCount(); i++) {
-					parent.getChildAt(i).setBackgroundColor(Color.WHITE);
+					parent.getChildAt(i).setBackgroundResource(0);
 				}
 				
 				view.setBackgroundResource(R.drawable.gradient_bg_hover);

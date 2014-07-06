@@ -3,6 +3,7 @@
     android:id="@+id/container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/common_bg"
     tools:context="dhbk.android.topomanager.MainActivity"
     tools:ignore="MergeRootFrame" >
 
