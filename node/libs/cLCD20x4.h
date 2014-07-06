@@ -18,7 +18,7 @@
 #include <cstdio>
 
 /* Definitions */
-#define CLCD20x4_DEBUG (1)
+#define CLCD20x4_DEBUG (0)
 
 /* cLCD namespace */
 namespace clcd20x4_ns{

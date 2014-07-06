@@ -195,18 +195,19 @@ void keypad_processing(void) {
 		}
 	}
 
-	/* processing */
+	/* processing (only detect one key at a time) */
 	if ( (key_read1 == key_read2) && (key_read2 == key_read3) ) { /* new stable state */
 
 		if (key_read1 != key_old){ /* change state */
 
-			if (key_read1 != keypad_ns::nokey) { /* change from inactive->active */
+			if ((key_old == keypad_ns::nokey) && (key_read1 != keypad_ns::nokey)) {
+				/* change from inactive->active */
 				key_old = key_read1;
 
 				longkey_count = keypad_long_pressed_time; //set time out value
 			}
 
-			if (key_read1 == keypad_ns::nokey) { /* change from active->inactive */
+			else { /* change from active->inactive */
 
 				if (longkey_count > 0) { // not time out yet, new key.
 					is_newkey = true;

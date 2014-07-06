@@ -17,19 +17,14 @@
 /* End includes */
 
 /* Global vars */
-//namespace Misc_ns{
-
 extern uint16_t ledBeat_period; // real value in msec.
 extern uint16_t miscTIM_period; // in msec.
-
-//}
 
 /* End global var */
 
 /* Prototypes */
 void bugs_fix (void);
 
-//TODO Complete these funcs.
 void delay_ms (uint32_t msec);
 void delay_ms_miscTIMISR (void); // It should be placed in miscTIMISR.
 
