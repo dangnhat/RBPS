@@ -13,6 +13,8 @@
 #include "MB1_System.h"
 
 #include "cLCD20x4.h"
+#include "rbpm_gui.h"
+#include "keypad.h"
 
 /* stacks */
 OS_STK bp_monitoring_task_stack [1024];
@@ -27,15 +29,14 @@ void controller_task(void *pdata);
 void znp_task(void *pdata);
 
 int main (void) {
-
 	/* System initialization */
 	MB1_system_init();
 
 	/* Start OS */
 	CoInitOS();
-//	CoCreateTask(bp_monitoring_task, 0, 0, &bp_monitoring_task_stack[1024-1], 1024);
-//	CoCreateTask(keypad_task, 0, 0, &keypad_task_stack[1024-1], 1024);
-//	CoCreateTask(controller_task, 0, 0, &controller_task_stack[1024-1], 1024);
+	CoCreateTask(bp_monitoring_task, 0, 0, &bp_monitoring_task_stack[1024-1], 1024);
+	CoCreateTask(keypad_task, 0, 0, &keypad_task_stack[1024-1], 1024);
+	CoCreateTask(controller_task, 0, 0, &controller_task_stack[1024-1], 1024);
 	CoCreateTask(znp_task, 0, 0, &znp_task_stack[1024-1], 1024);
 	CoStartOS();
 
@@ -96,45 +97,81 @@ void controller_task(void *param) {
  * @return      NERVER RETURN
  */
 void znp_task(void *param) {
-	clcd20x4 a_lcd;
-	const uint8_t pattern[8] = {0x0F, 0x00, 0x0F, 0x0F, 0x0, 0x0, 0xF, 0x0};
-	const uint8_t bat_100[8] = {0x0E, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F};
-	const uint8_t bat_lt66[8] = {0x0E, 0x1F, 0x11, 0x11, 0x1F, 0x1F, 0x1F, 0x1F};
-	const uint8_t bat_lt33[8] = {0x0E, 0x1F, 0x11, 0x11, 0x11, 0x1F, 0x1F, 0x1F};
-	const uint8_t bat_lt5[8] = {0x0E, 0x1F, 0x11, 0x11, 0x11, 0x11, 0x11, 0x1F};
+	keypad a_keypad;
+	bool longkey;
+	int8_t key;
+	uint32_t patient_id = 0;
 
-	a_lcd.putc(0x7F);
-	a_lcd.gen_pattern(pattern, 0);
-	a_lcd.gen_pattern(bat_100, 1);
-	a_lcd.gen_pattern(bat_lt66, 2);
-	a_lcd.gen_pattern(bat_lt33, 3);
-	a_lcd.gen_pattern(bat_lt5, 4);
-	a_lcd.putc(0);
-	a_lcd.putc(1);
-	a_lcd.putc(2);
-	a_lcd.putc(3);
-	a_lcd.putc(4);
+	MB1_ISRs.subISR_assign(ISRMgr_ns::ISRMgr_TIM6, keypad_timerISR);
 
-	/* test keypad */
-	GPIO_InitTypeDef gpio_init_s;
-	gpio_init_s.GPIO_Mode = GPIO_Mode_Out_PP;
-	gpio_init_s.GPIO_Speed = GPIO_Speed_10MHz;
-	gpio_init_s.GPIO_Pin = GPIO_Pin_0;
+	rbpm_gui a_gui;
+	a_gui.start_print_default_screen();
+	while (1) {
+		key = a_keypad.get_key(longkey);
 
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
-	GPIO_Init(GPIOC, &gpio_init_s);
+		if ((key != keypad_ns::nokey) && (key < 10)) {
+			patient_id = patient_id * 10 + key;
+			a_gui.start_print_patient_id(patient_id);
+		}
+		else if (key == 10) {
+			break;
+		}
+		else if (key == 11) {
+			a_gui.start_clear_patient_id();
+			patient_id = 0;
+		}
+	}
 
-	gpio_init_s.GPIO_Pin = GPIO_Pin_1;
-	GPIO_Init(GPIOC, &gpio_init_s);
+	/* check patient id */
+	a_gui.start_print_checking();
+	CoTimeDelay(0, 0, 1, 0);
 
-	GPIO_ResetBits(GPIOC, GPIO_Pin_0 | GPIO_Pin_1);
+	if (patient_id != 1992 && patient_id != 13456) {
+		a_gui.start_print_incorrect();
+	}
+	else {
+		a_gui.welcome_print_default_screen((int8_t *)"Pham Huu Dang Nhat");
 
-	GPIO_SetBits(GPIOC, GPIO_Pin_0);
+		while (1) {
+			key = a_keypad.get_key(longkey);
 
-	GPIO_SetBits(GPIOC, GPIO_Pin_1);
+			if (key == 1) {
+				break;
+			}
+		}
 
-	GPIO_ResetBits(GPIOC, GPIO_Pin_0);
+		a_gui.measuring_print_mesg();
+		CoTimeDelay(0, 0, 1, 0);
 
+		a_gui.direct_print_default_screen(120, 78, 60, false, 123, 79, 67, 23, true, false, true, false);
+
+		while (1) {
+			key = a_keypad.get_key(longkey);
+
+			if (key == 10) {
+				if (longkey) {
+					while(a_keypad.is_longkey_still_hold(key)){
+						a_gui.direct_scroll_down();
+						CoTimeDelay(0, 0, 0, 300);
+					}
+				}
+				else {
+					a_gui.direct_scroll_down();
+				}
+			}
+			else if (key == 11) {
+				if (longkey) {
+					while(a_keypad.is_longkey_still_hold(key)){
+						a_gui.direct_scroll_up();
+						CoTimeDelay(0, 0, 0, 300);
+					}
+				}
+				else {
+					a_gui.direct_scroll_up();
+				}
+			}
+		}
+	}
 
 	while(1) {
 		printf("This is znp task\n");
