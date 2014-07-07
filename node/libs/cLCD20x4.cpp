@@ -228,6 +228,9 @@ void clcd20x4::clear(void) {
 	/* save state */
 	cur_line = 1;
 	cur_pos = 1;
+
+	/* additional delay */ //FIXME(later): why do we need this ?
+	delay_us(200);
 }
 
 /*----------------------------------------------------------------------------*/
@@ -238,6 +241,11 @@ void clcd20x4::home(void) {
 	/* save state */
 	cur_line = 1;
 	cur_pos = 1;
+}
+
+/*----------------------------------------------------------------------------*/
+void clcd20x4::home_woshift(void) {
+	set_cursor(1, 1);
 }
 
 /*----------------------------------------------------------------------------*/

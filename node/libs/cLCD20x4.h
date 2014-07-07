@@ -81,6 +81,11 @@ public:
 	void home(void);
 
 	/**
+	 * @brief 	Set cursor to 1-1 without shift. (no clearing)
+	 */
+	void home_woshift(void);
+
+	/**
 	 * @brief   store a custom code generated pattern to CGRAM.
 	 *
 	 * @param[in]	pattern, an 8-elements array.
