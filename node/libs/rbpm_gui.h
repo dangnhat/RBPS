@@ -26,22 +26,22 @@ namespace rbpm_gui_ns {
 	const uint8_t bat_lt66[8] = {0x0E, 0x1F, 0x11, 0x11, 0x1F, 0x1F, 0x1F, 0x1F};
 	const uint8_t bat_lt33[8] = {0x0E, 0x1F, 0x11, 0x11, 0x11, 0x1F, 0x1F, 0x1F};
 	const uint8_t bat_lt5[8] = {0x0E, 0x1F, 0x11, 0x11, 0x11, 0x11, 0x11, 0x1F};
-	const uint8_t box_check[8] = {0x00, 0x00, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x00};
+	const uint8_t box_check[8] = {0x00, 0x00, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x00}; //TODO: redefine
 	const uint8_t box_wocheck[8] = {0x00, 0x00, 0x1F, 0x11, 0x11, 0x11, 0x1F, 0x00};
 	const uint8_t down_arrow[8] = {0x04, 0x04, 0x04, 0x04, 0x15, 0x0E, 0x04, 0x00};
 
-	const int8_t bat_100_code = 0;
-	const int8_t bat_66_code = 1;
-	const int8_t bat_33_code = 2;
-	const int8_t bat_5_code = 3;
-	const int8_t box_check_code = 4;
-	const int8_t box_wocheck_code = 5;
-	const int8_t down_arrow_code = 6;
+	const int8_t bat_100_code = 1;
+	const int8_t bat_66_code = 2;
+	const int8_t bat_33_code = 3;
+	const int8_t bat_5_code = 4;
+	const int8_t box_check_code = 5;
+	const int8_t box_wocheck_code = 6;
+	const int8_t down_arrow_code = 7;
 
-	const uint8_t battery_pos[] = {1, 19}; /* line 1, pos 19 */
+	const uint8_t battery_pos[] = {1, 20}; /* line 1, pos 19 */
 
 	const int8_t start_screen[] =
-			"------ HCMUT ------\n"
+			"---- HCMUT ----\n"
 			"Patient's id:";
 	const uint8_t patient_id_pos[] = {2, 14};
 	const uint8_t check_mesg_pos[] = {3, 1};
@@ -51,28 +51,33 @@ namespace rbpm_gui_ns {
 	const int8_t welcome_screen[] =
 			"Welcome,\n"
 			"%s\n"
-			"\t1. Measure directly\n"
-			"\t2. Remote monitoring";
+			"\t1.Measure directly\n"
+			"\t2.Remote monitoring";
 
-	const int8_t measuring_mesg[] = "Measuring...";
+	const int8_t measuring_mesg[] =
+			"Please wait,\n"
+			"Measuring...";
 
 	const int8_t direct_screen[] =
-			"- Measure directly -\n"
-			"BP: %d/%d (mmHg)\n"
-			"HR: %d (pulses/min)\n"
-			"- prediction data -%c\n"
-			"hypertension risk\t%c\n"
-			"monthly avg BP:\n"
-			"\t%d/%d (mmHg)\n"
-			"monthly avg HR:\n"
-			"\t%d (pulses/min)\n"
-			"monthly avg BMI:\n"
-			"\t%d (kg/m^2)\n"
-			"- medical history -\n"
-			"diabetes\t%c\n"
-			"dyslipidemia\t%c\n"
-			"atherosclerosis\t%c\n"
-			"gout\t%c\n";
+			"-Measure directly-\n"
+			"BP: %d/%d\n"
+			"HR: %d\n"
+			"-Prediction-%c\n"
+			"Hypertension risk\t%c\n"
+			"Monthly avg BP:\n"
+			"\t%d/%d\n"
+			"Monthly avg HR:\n"
+			"\t%d\n"
+			"Monthly avg BMI:\n"
+			"\t%d\n"
+			"-Medical history-\n"
+			"Diabetes\t%c\n"
+			"Dyslipidemia\t%c\n"
+			"Atherosclerosis\t%c\n"
+			"Gout\t%c\n";
+	const uint8_t direct_screen_nrows = 16;
+	const uint8_t direct_screen_ncols = 20;
+	const uint8_t direct_screen_height = 4;
 };
 
 /* class */
@@ -93,7 +98,12 @@ public:
 	 *
 	 * @param[in]	patient_id.
 	 */
-	void start_print_patient_id(uint16_t patient_id);
+	void start_print_patient_id(uint32_t patient_id);
+
+	/**
+	 * @brief   clear patient id.
+	 */
+	void start_clear_patient_id(void);
 
 	/**
 	 * @brief   print checking message.
@@ -156,7 +166,22 @@ public:
 	void print_battery_status(uint8_t status);
 
 private:
-	cur_pin_status;
+	/**
+	 * @brief   print "4" line of buffer to screen.
+	 *
+	 * @param[in]	first_row, first row of buffer.
+	 */
+	void direct_print_buffer(uint8_t first_row);
+
+	uint8_t cur_battery_status;
+
+	uint8_t start_old_patient_id_strlen;
+	uint8_t start_old_check_mesg_strlen;
+
+	int8_t direct_screen_buffer[rbpm_gui_ns::direct_screen_nrows]
+	                           [rbpm_gui_ns::direct_screen_ncols + 1];
+	uint8_t cur_direct_pos;
+	uint8_t direct_max_rows;
 };
 
 
