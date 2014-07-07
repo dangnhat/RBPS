@@ -80,11 +80,9 @@ keypad::keypad(void) {
 int8_t keypad::get_key(bool &longkey) {
 	if (is_newkey) {
 		is_newkey = false;
-		longkey = false;
-		return newkey;
-	}
-	else if (is_longkey) {
-		longkey = true;
+
+		longkey = is_longkey;
+
 		return newkey;
 	}
 	else {
@@ -191,6 +189,7 @@ void keypad_processing(void) {
 
 		if (longkey_count == 0) { // time out, long_key_pressed.
 			is_longkey = true;
+			is_newkey = true;
 			newkey = key_old;
 		}
 	}
