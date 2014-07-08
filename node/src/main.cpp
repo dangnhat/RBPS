@@ -8,22 +8,19 @@
 
 #include <cstdio>
 #include <cstring>
-#include "stm32f10x.h"
 #include "coocox.h"
-#include "MB1_System.h"
 #include "rbps_glb.h"
+#include "znp_task.h"
 
 /* stacks */
 OS_STK bp_monitoring_task_stack [1024];
 OS_STK keypad_task_stack [1024];
 OS_STK controller_task_stack [1024];
-OS_STK znp_task_stack [1024];
 
 /* task's function prototypes */
 void bp_monitoring_task(void *pdata);
 void keypad_task(void *pdata);
 void controller_task(void *pdata);
-void znp_task(void *pdata);
 
 int main (void) {
 	/* System initialization */
@@ -35,7 +32,7 @@ int main (void) {
 	CoCreateTask(bp_monitoring_task, 0, 0, &bp_monitoring_task_stack[1024-1], 1024);
 	CoCreateTask(keypad_task, 0, 0, &keypad_task_stack[1024-1], 1024);
 	CoCreateTask(controller_task, 0, 0, &controller_task_stack[1024-1], 1024);
-	CoCreateTask(znp_task, 0, 0, &znp_task_stack[1024-1], 1024);
+	CoCreateTask(znp_task_func, 0, 0, &znp_task_stack[znp_task_stack_size-1], znp_task_stack_size);
 	CoStartOS();
 
 	while (1) {
