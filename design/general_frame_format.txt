@@ -262,3 +262,12 @@ Mobile se hien thi len bao cho nguoi do biet.
 node tu quan ly viec cho nay.
 
 time_to_stall = 255 (reversed for future use)
+
+/*----------------------------------------------------------------------------*/
+* get_schedule:
+/********************************************/
+/*  1 (bytes)   |       2       |   4       */
+/*  leghth = 4  |   0x0019      |   node_id */
+/********************************************/
+
+mobile -> Coordinator
