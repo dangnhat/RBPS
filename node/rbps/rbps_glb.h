@@ -28,8 +28,8 @@
 
 namespace rbps_ns {
 	/* extern global variables */
-	extern keypad rbps_keypad;
-	extern rbpm_gui rbps_node_gui;
+	extern keypad node_keypad;
+	extern rbpm_gui node_gui;
 
 	/* Command id */
 	const uint16_t update_node_id = 0x0003; // out
@@ -44,8 +44,8 @@ namespace rbps_ns {
 	/* shared queue between main task and znp task */
 	extern OS_EventID main2znp_queue_id;
 	extern OS_EventID znp2main_queue_id;
-	const uint8_t rbps_ack = 'a';
-	const uint8_t rbps_command = 'c';
+	const uint8_t ack = 'a';
+	const uint8_t command = 'c';
 }
 
 /* frame to share data between tasks */
