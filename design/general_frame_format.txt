@@ -45,7 +45,7 @@ Coor se khong gui update_node_rep ve.
 * update_node_rep:
 /********************************************/
 /*  1 (bytes)   |       2       |     1     */
-/*  leghth = 8  |   0x0016      |   status  */
+/*  leghth = 1  |   0x0016      |   status  */
 /********************************************/
 
 Coordinator -> node: khi nhan duoc update_node tu node thi Coordinator se kiem tra
@@ -66,8 +66,8 @@ node, mobile -> Coordinator: de lay du lieu ve thong tin cua benh nhan (ngay sin
 /*----------------------------------------------------------------------------*/
 * detail_info_rep:
 /************************************************************************************************/
-/*  1 (bytes)   |       2       |   4 (1 | 1 | 2)                                   | var       */
-/*  leghth = var|   0x0015      |   date_of_birth (day (1) | month (1) | year (2) ) | name      */
+/*  1 (bytes)   |       2       |   4 (1 | 1 | 2)                                   | 20        */
+/*  leghth = 24 |   0x0015      |   date_of_birth (day (1) | month (1) | year (2) ) | name      */
 /************************************************************************************************/
 
 Coordinator -> mobile, node.
@@ -223,7 +223,7 @@ mobile -> Coordinator
 * prediction_rep:
 /************************************************/
 /*  1 (bytes)   |       2       |   1                       |   8                           |   4               |
-/*  leghth = 4  |   0x0010      |   prehypertension_risk    |   avg BP in month (sys-dias)  |   avg HR in month |
+/*  leghth = 21 |   0x0010      |   prehypertension_risk    |   avg BP in month (sys-dias)  |   avg HR in month |
 
 |   4                   |   1                               |   1               |   1               |   1       */
 |   avg BMI in month    |   diabetes (1 = true, 0 = false)  |   dyslipidemia    |   atherosclerosis |   gout    */
@@ -252,7 +252,7 @@ khi nhan duoc lenh udt_schedule_to_mobile
 * hold_measurement
 /********************************************************************/
 /*  1 (bytes)   |       2       |   4       |   1                   */
-/*  leghth = 10 |   0x0018      |   node_id |   time to stall (min) */
+/*  leghth = 5  |   0x0018      |   node_id |   time to stall (min) */
 /********************************************************************/
 
 node -> Coordinator, Coordinator -> mobile: khi benh nhan khong muon do thi node co the 
