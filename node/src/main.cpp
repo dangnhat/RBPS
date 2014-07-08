@@ -11,10 +11,7 @@
 #include "stm32f10x.h"
 #include "coocox.h"
 #include "MB1_System.h"
-
-#include "cLCD20x4.h"
-#include "rbpm_gui.h"
-#include "keypad.h"
+#include "rbps_glb.h"
 
 /* stacks */
 OS_STK bp_monitoring_task_stack [1024];
@@ -31,6 +28,7 @@ void znp_task(void *pdata);
 int main (void) {
 	/* System initialization */
 	MB1_system_init();
+	rbps_init();
 
 	/* Start OS */
 	CoInitOS();
