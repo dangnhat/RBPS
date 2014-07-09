@@ -78,6 +78,10 @@ namespace rbpm_gui_ns {
 	const uint8_t direct_screen_nrows = 16;
 	const uint8_t direct_screen_ncols = 20;
 	const uint8_t direct_screen_height = 4;
+
+	const int8_t remote_screen[] =
+			"-Remote monitoring-"
+			"\tR. Measure in: %d'";
 };
 
 /* class */
@@ -157,6 +161,13 @@ public:
 	 * @brief   scroll direct measurement result screen up one line.
 	 */
 	void direct_scroll_up(void);
+
+	/**
+	 * @brief   print remote monitoring screen.
+	 *
+	 * @param[in]	measure_time, time in minute to measure.
+	 */
+	void remote_print_screen(uint8_t measure_time);
 
 	/**
 	 * @brief   print battery status.

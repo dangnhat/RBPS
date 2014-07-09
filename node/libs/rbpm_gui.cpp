@@ -243,6 +243,21 @@ void rbpm_gui::direct_scroll_up(void) {
 }
 
 /*----------------------------------------------------------------------------*/
+void rbpm_gui::remote_print_screen(uint8_t measure_time) {
+	/* clear */
+	clear();
+
+	/* print battery status */
+	print_battery_status(cur_battery_status);
+
+	/* set default cursor position */
+	home_woshift();
+
+	/* print remote monitoring screen */
+	this->printf((const char *)rbpm_gui_ns::remote_screen, measure_time);
+}
+
+/*----------------------------------------------------------------------------*/
 void rbpm_gui::print_battery_status(uint8_t status) {
 	/* set cursor */
 	set_cursor(rbpm_gui_ns::battery_pos[0], rbpm_gui_ns::battery_pos[1]);
