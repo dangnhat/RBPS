@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -13,6 +14,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 public class ScheduleActivity extends Activity {
 	public final String newScheduleCmd = "11";
@@ -44,16 +46,26 @@ public class ScheduleActivity extends Activity {
 		monthIn = (EditText)findViewById(R.id.monthInput);
 		yearIn = (EditText)findViewById(R.id.yearInput);
 		applyBtn = (Button)findViewById(R.id.btnApply);
-
-		SimpleDateFormat curFormater = new SimpleDateFormat("HHmmddMMyyyy"); 
-		Calendar cal = Calendar.getInstance();
-		String dateStr = curFormater.format(cal.getTime());
 		
-		String hourInstance = dateStr.substring(0, 2);
-		String minInstance = dateStr.substring(2, 4);
-		String dateInstance = dateStr.substring(4, 6);
-		String monthInstance = dateStr.substring(6, 8);
-		String yearInstance = dateStr.substring(8);
+		Intent intent = getIntent();
+		Bundle bundle = intent.getExtras();
+		String scheduleInfo = bundle.getString("scheduleInfo");
+		
+//		SimpleDateFormat curFormater = new SimpleDateFormat("HHmmddMMyyyy"); 
+//		Calendar cal = Calendar.getInstance();
+//		String dateStr = curFormater.format(cal.getTime());
+//		
+//		String hourInstance = dateStr.substring(0, 2);
+//		String minInstance = dateStr.substring(2, 4);
+//		String dateInstance = dateStr.substring(4, 6);
+//		String monthInstance = dateStr.substring(6, 8);
+//		String yearInstance = dateStr.substring(8);
+		
+		String hourInstance = scheduleInfo.substring(0, 2);
+		String minInstance = scheduleInfo.substring(2, 4);
+		String dateInstance = scheduleInfo.substring(4, 6);
+		String monthInstance = scheduleInfo.substring(6, 8);
+		String yearInstance = scheduleInfo.substring(8);
 		
 		hourIn.setText(hourInstance);
 		minIn.setText(minInstance);
@@ -68,7 +80,7 @@ public class ScheduleActivity extends Activity {
 				if(scheduleCheck.isChecked()) {
 					bigLayout.setVisibility(View.VISIBLE);
 				}else {
-					bigLayout.setVisibility(View.GONE);
+					bigLayout.setVisibility(View.INVISIBLE);
 				}
 			}
 		});
@@ -87,19 +99,26 @@ public class ScheduleActivity extends Activity {
 			public void onClick(View v) {
 				relativeCheck.setChecked(true);
 				absCheck.setChecked(false);
-				dateLayout.setVisibility(View.GONE);
+				dateLayout.setVisibility(View.INVISIBLE);
 			}
 		});
 	}
 	
 	public void apllyTime(View viewClick) {
-//		if(MainActivity.conn) {
-//			/* Create a frame */
-//            
-//		}else
-//			Toast.makeText(ScheduleActivity.this, "No connection. Please connect again!", Toast.LENGTH_SHORT).show();
-		MainActivity.DATA = createDataFrame(newScheduleCmd, MainActivity.DATA);
-		new SocketWorker(MainActivity.DATA, getApplicationContext()).execute();
+		if(MainActivity.conn) {
+			String cmd = "";
+			if(scheduleCheck.isChecked()) {
+				cmd = newScheduleCmd;
+			}else {
+				cmd = clearScheduleCmd;
+			}
+			
+			/* Create a frame */
+			MainActivity.DATA = createDataFrame(cmd, MainActivity.DATA);
+			new SocketWorker(MainActivity.DATA, getApplicationContext()).execute();
+		}else
+			Toast.makeText(ScheduleActivity.this, "No connection. Please connect again!", Toast.LENGTH_SHORT).show();
+		
 		return;
 	}
 
@@ -129,6 +148,18 @@ public class ScheduleActivity extends Activity {
 		frame += String.valueOf(lengthData) + cmd + data;
 		
 		return frame;
+	}
+	
+	public String getTime() {
+		String time = hourIn.getText().toString() + minIn.getText().toString();
+		
+		return time;
+	}
+	
+	public String getDate() {
+		String date = dateIn.getText().toString() + monthIn.getText().toString() + yearIn.getText().toString();
+		
+		return date;
 	}
 
 }
