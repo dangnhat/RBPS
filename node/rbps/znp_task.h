@@ -15,6 +15,9 @@
 
 #include "rbps_glb.h"
 
+/* Debug definition */
+#define ZNP_TASK_DEBUG (1)
+
 /* stack */
 const uint16_t znp_task_stack_size = 1024;
 extern OS_STK znp_task_stack[znp_task_stack_size];
