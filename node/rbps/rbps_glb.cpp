@@ -27,6 +27,9 @@ static const uint8_t znp2main_queue_size = 128;
 
 static void *main2znp_queue[main2znp_queue_size];
 static void *znp2main_queue[znp2main_queue_size];
+
+cir_queue main2znp_cir_queue;
+cir_queue znp2main_cir_queue;
 /*----------------------------------------------------------------------------*/
 void rbps_init(void) {
 	/* assign ISR for keypad */

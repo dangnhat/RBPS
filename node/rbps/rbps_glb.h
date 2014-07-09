@@ -18,13 +18,15 @@
 #include "coocox.h"
 #include "rbpm_gui.h"
 #include "keypad.h"
+#include "cir_queue.h"
 
 /* definitions */
-#define RBPS_DEBUG (0)
+#define RBPS_DEBUG (1)
 #if RBPS_DEBUG
 #define RBPS_PRINTF(...) printf(__VA_ARGS__)
 #else
 #define RBPS_PRINTF(...)
+#endif
 
 namespace rbps_ns {
 	/* extern global variables */
@@ -41,17 +43,22 @@ namespace rbps_ns {
 	const uint16_t node_report_id = 0x0017; // out
 	const uint16_t prediction_rep_id = 0x0010; // in
 
+	const uint8_t update_node_length = 8;
+	const uint8_t update_node_rep_length = 1;
+	const uint8_t detail_info_length = 4;
+	const uint8_t detail_info_rep_length = 24;
+	const uint8_t measure_node_length = 4;
+	const uint8_t hold_measurement_length = 5;
+	const uint8_t prediction_rep_length = 21;
+
 	/* shared queue between main task and znp task */
 	extern OS_EventID main2znp_queue_id;
 	extern OS_EventID znp2main_queue_id;
-	const uint8_t ack = 'a';
-	const uint8_t command = 'c';
-}
+	const uint8_t message_pending = 'm';
 
-/* frame to share data between tasks */
-/* firts byte: rbps_ack or rbps_command. If first byte is rbps_command then it's followed
- * by general frame format.
- */
+	extern cir_queue main2znp_cir_queue;
+	extern cir_queue znp2main_cir_queue;
+}
 
 /**
  * @brief 	Init RBPS system,
