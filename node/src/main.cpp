@@ -12,16 +12,6 @@
 #include "rbps_glb.h"
 #include "znp_task.h"
 
-/* stacks */
-OS_STK bp_monitoring_task_stack [1024];
-OS_STK keypad_task_stack [1024];
-OS_STK controller_task_stack [1024];
-
-/* task's function prototypes */
-void bp_monitoring_task(void *pdata);
-void keypad_task(void *pdata);
-void controller_task(void *pdata);
-
 int main (void) {
 	/* System initialization */
 	MB1_system_init();
@@ -29,9 +19,6 @@ int main (void) {
 
 	/* Start OS */
 	CoInitOS();
-	CoCreateTask(bp_monitoring_task, 0, 0, &bp_monitoring_task_stack[1024-1], 1024);
-	CoCreateTask(keypad_task, 0, 0, &keypad_task_stack[1024-1], 1024);
-	CoCreateTask(controller_task, 0, 0, &controller_task_stack[1024-1], 1024);
 	CoCreateTask(znp_task_func, 0, 0, &znp_task_stack[znp_task_stack_size-1], znp_task_stack_size);
 	CoStartOS();
 
@@ -43,55 +30,9 @@ int main (void) {
 }
 
 /**
- * @brief   Blood pressure and heart rate monitoring task
- *
- * @param[in]   param
- *
- * @return      NERVER RETURN
+ * @brief   gui example code //TODO: remove when it become useless.
  */
-void bp_monitoring_task(void *param) {
-	while(1) {
-		printf("This is bp_monitoring_task\n");
-		CoTimeDelay(0, 0, 1, 0);
-	}
-}
-
-/**
- * @brief   Keypad task
- *
- * @param[in]   param
- *
- * @return      NERVER RETURN
- */
-void keypad_task(void *param) {
-	while(1) {
-		printf("This is keypad_task\n");
-		CoTimeDelay(0, 0, 1, 0);
-	}
-}
-
-/**
- * @brief   Controller task
- *
- * @param[in]   param
- *
- * @return      NERVER RETURN
- */
-void controller_task(void *param) {
-	while(1) {
-		printf("This is controller task\n");
-		CoTimeDelay(0, 0, 1, 0);
-	}
-}
-
-/**
- * @brief   znp task
- *
- * @param[in]   param
- *
- * @return      NERVER RETURN
- */
-void znp_task(void *param) {
+void gui_example(void) {
 	keypad a_keypad;
 	bool longkey;
 	int8_t key;
