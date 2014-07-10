@@ -1,5 +1,8 @@
 package dhbk.android.topomanager;
 
+import java.io.PrintWriter;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
@@ -17,6 +20,9 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 public class ScheduleActivity extends Activity {
+	Misc misc = new Misc();
+	final int SERVER_PORT = 9999;
+	final String SERVER_IP_DEFAULT = "192.168.150.1";
 	public final String newScheduleCmd = "11";
 	public final String clearScheduleCmd = "12";
 	CheckBox scheduleCheck;
@@ -49,31 +55,41 @@ public class ScheduleActivity extends Activity {
 		
 		Intent intent = getIntent();
 		Bundle bundle = intent.getExtras();
-		String scheduleInfo = bundle.getString("scheduleInfo");
+		String scheduleInfo = bundle.getString("data");
 		
-//		SimpleDateFormat curFormater = new SimpleDateFormat("HHmmddMMyyyy"); 
-//		Calendar cal = Calendar.getInstance();
-//		String dateStr = curFormater.format(cal.getTime());
-//		
-//		String hourInstance = dateStr.substring(0, 2);
-//		String minInstance = dateStr.substring(2, 4);
-//		String dateInstance = dateStr.substring(4, 6);
-//		String monthInstance = dateStr.substring(6, 8);
-//		String yearInstance = dateStr.substring(8);
+		String isSchedule = misc.parse(scheduleInfo, "", "schedule");
+		String isAbs = "0";
+		String timeScheduled = "";
+		String hour, min, date, month, year;
+		if(isSchedule.equals("1")) {
+			bigLayout.setVisibility(View.VISIBLE);
+			scheduleCheck.setChecked(true);
+			timeScheduled = misc.parse(scheduleInfo, "abs", "");
+			hour = misc.getHour(timeScheduled);
+			min = misc.getMinute(timeScheduled);
+			hourIn.setText(hour);
+			minIn.setText(min);
+			isAbs = misc.parse(scheduleInfo, "schedule", "abs");
+			if(isAbs.equals("1")) {
+				absCheck.setChecked(true);
+				relativeCheck.setChecked(false);
+				dateLayout.setVisibility(View.VISIBLE);
+				date = misc.getDate(timeScheduled);
+				month = misc.getMonth(timeScheduled);
+				year = misc.getYear(timeScheduled);
+				dateIn.setText(date);
+				monthIn.setText(month);
+				yearIn.setText(year);
+			}else if(isAbs.equals("0")) {
+				absCheck.setChecked(false);
+				relativeCheck.setChecked(true);
+				dateLayout.setVisibility(View.INVISIBLE);
+			}
+		}else {
+			scheduleCheck.setChecked(false);
+			bigLayout.setVisibility(View.INVISIBLE);
+		}
 		
-		String hourInstance = scheduleInfo.substring(0, 2);
-		String minInstance = scheduleInfo.substring(2, 4);
-		String dateInstance = scheduleInfo.substring(4, 6);
-		String monthInstance = scheduleInfo.substring(6, 8);
-		String yearInstance = scheduleInfo.substring(8);
-		
-		hourIn.setText(hourInstance);
-		minIn.setText(minInstance);
-		dateIn.setText(dateInstance);
-		monthIn.setText(monthInstance);
-		yearIn.setText(yearInstance);
-		
-		scheduleCheck.setChecked(true);
 		scheduleCheck.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -105,17 +121,48 @@ public class ScheduleActivity extends Activity {
 	}
 	
 	public void apllyTime(View viewClick) {
+		SimpleDateFormat curFormater = new SimpleDateFormat("HHmmddMMyyyy"); 
+		Calendar cal = Calendar.getInstance();
+		String timeInstance = curFormater.format(cal.getTime());
+		
+		String hourInstance = misc.getHour(timeInstance);
+		String minInstance = misc.getMinute(timeInstance);
+		String dateInstance = misc.getDate(timeInstance);
+		String monthInstance = misc.getMonth(timeInstance);
+		String yearInstance = misc.getYear(timeInstance);
+		
 		if(MainActivity.conn) {
 			String cmd = "";
+			String data = "";
 			if(scheduleCheck.isChecked()) {
 				cmd = newScheduleCmd;
+				if(absCheck.isChecked()) {
+					if(Integer.parseInt(yearInstance) > Integer.parseInt(yearIn.getText().toString())) {
+						Toast.makeText(ScheduleActivity.this, "Invalid year!", Toast.LENGTH_SHORT).show();
+						return;
+					}else if(Integer.parseInt(monthInstance) > Integer.parseInt(monthIn.getText().toString())) {
+						Toast.makeText(ScheduleActivity.this, "Invalid month!", Toast.LENGTH_SHORT).show();
+						return;
+					}else if(Integer.parseInt(dateInstance) > Integer.parseInt(dateIn.getText().toString())) {
+						Toast.makeText(ScheduleActivity.this, "Invalid date!", Toast.LENGTH_SHORT).show();
+						return;
+					}else if(Integer.parseInt(hourInstance) > Integer.parseInt(hourIn.getText().toString())) {
+						Toast.makeText(ScheduleActivity.this, "Invalid hour!", Toast.LENGTH_SHORT).show();
+						return;
+					}else if(Integer.parseInt(minInstance) > Integer.parseInt(minIn.getText().toString())) {
+						Toast.makeText(ScheduleActivity.this, "Invalid minute!", Toast.LENGTH_SHORT).show();
+						return;
+					}
+					data = "1schedule1abs" + getTimeFromText() + getDateFromText();
+				}else {
+					data = "1schedule0abs" + getTimeFromText();
+				}
 			}else {
 				cmd = clearScheduleCmd;
 			}
 			
-			/* Create a frame */
-			MainActivity.DATA = createDataFrame(cmd, MainActivity.DATA);
-			new SocketWorker(MainActivity.DATA, getApplicationContext()).execute();
+			/* Create and send frame */
+			sendApply(createDataFrame(cmd, data));
 		}else
 			Toast.makeText(ScheduleActivity.this, "No connection. Please connect again!", Toast.LENGTH_SHORT).show();
 		
@@ -150,16 +197,39 @@ public class ScheduleActivity extends Activity {
 		return frame;
 	}
 	
-	public String getTime() {
+	public String getTimeFromText() {
 		String time = hourIn.getText().toString() + minIn.getText().toString();
 		
 		return time;
 	}
 	
-	public String getDate() {
+	public String getDateFromText() {
 		String date = dateIn.getText().toString() + monthIn.getText().toString() + yearIn.getText().toString();
 		
 		return date;
+	}
+	
+	public void sendApply(String data) {
+		/* Connect to server */
+		try {
+			MainActivity.socketTemp = new Socket();
+			MainActivity.socketTemp.bind(null);
+			if(MainActivity.useIpDefault)
+				MainActivity.socketTemp.connect((new InetSocketAddress(SERVER_IP_DEFAULT, SERVER_PORT)), 10000);
+			else
+				MainActivity.socketTemp.connect((new InetSocketAddress(MainActivity.SERVER_IP, SERVER_PORT)), 10000);
+        }catch(Exception e) {
+            e.printStackTrace();
+            return;
+        }
+		/* Open a output stream and a input stream to send and receive data */
+        try{
+        	PrintWriter out = new PrintWriter(MainActivity.socketTemp.getOutputStream(), true);
+            /* Send frame to server */
+            out.println(data);
+        }catch(Exception e) {
+            e.printStackTrace();
+        }
 	}
 
 }

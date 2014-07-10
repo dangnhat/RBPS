@@ -1,13 +1,16 @@
 package dhbk.android.topomanager;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.webkit.WebView;
 
 public class DetailActivity extends Activity {
-
+	Misc misc = new Misc();
+	String[] specData;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -16,55 +19,72 @@ public class DetailActivity extends Activity {
 		WebView detail = (WebView)findViewById(R.id.detailWebView);
 		detail.getSettings().setBuiltInZoomControls(true);
 		
-		String[] dataSysBP = new String[7];
-		String[] dataDiasBP = new String[7];
-		String[] dataHR = new String[7];
-		String[] dataTimeStamp = new String[11];
+		/* Get extras from MainActivity */
+		Intent intent = getIntent();
+		Bundle bundle = intent.getExtras();
+		String detailData = bundle.getString("data");
 		
-		String name = "Pham Huu Dang Nhat";
-		String nID = "1";
-		String pID = "1";
+		/* Parse data from extra */
+		specData = parseInfoFromDetailData(detailData);
+		
+		/* Common String */
 		String emptyBox = "<img src=\"img/empty.png\">";
 		String fillBox = "<img src=\"img/fill.png\">";
-		String recentlyHeight = "170";
 		String hrLine = "<hr size = \"3px\" noshade = \"noshade\">";
 		String halfHrLine = "<hr width = \"50%\" align = \"center\" noshade = \"noshade\">";
 		
-		dataSysBP[0] = "110";
-		dataSysBP[1] = "112";
-		dataSysBP[2] = "118";
-		dataSysBP[3] = "112";
-		dataSysBP[4] = "118";
-		dataSysBP[5] = "112";
-		dataSysBP[6] = "118";
+		/* Get basic information */
+		String nID = misc.parse(specData[0], "", "n");
+		String pID = misc.parse(specData[0], "n", "p");
+		String name = misc.parse(specData[0], "p", "");
 		
-		dataDiasBP[0] = "66";
-		dataDiasBP[1] = "68";
-		dataDiasBP[2] = "69";
-		dataDiasBP[3] = "68";
-		dataDiasBP[4] = "69";
-		dataDiasBP[5] = "69";
-		dataDiasBP[6] = "69";
+		String[] dataSysBP = new String[7];
+		String[] dataDiasBP = new String[7];
+		String[] dataHR = new String[7];
+		String[] dataTime = new String[5];
+		String[] dataTimeStamp = new String[11];
 		
-		dataHR[0] = "79";
-		dataHR[1] = "75";
-		dataHR[2] = "79";
-		dataHR[3] = "75";
-		dataHR[4] = "79";
-		dataHR[5] = "75";
-		dataHR[6] = "79";
+		/* Get BP and HR information */
+		for(int i = 0; i < 7; i++) {
+			dataSysBP[i] = misc.parse(specData[i+1], "", "sys");
+			dataDiasBP[i] = misc.parse(specData[i+1], "sys", "dias");
+			dataHR[i] = misc.parse(specData[i+1], "dias", "hr");
+		}
 		
-		dataTimeStamp[0] = "14h30 29/06/2014";
-		dataTimeStamp[1] = "14h30 29/06/2014";
-		dataTimeStamp[2] = "14h30 29/06/2014";
-		dataTimeStamp[3] = "14h30 29/06/2014";
-		dataTimeStamp[4] = "14h30 29/06/2014";
-		dataTimeStamp[5] = "14h30 29/06/2014";
-		dataTimeStamp[6] = "14h30 29/06/2014";
-		dataTimeStamp[7] = "14h30 29/06/2014";
-		dataTimeStamp[8] = "14h30 29/06/2014";
-		dataTimeStamp[9] = "14h30 29/06/2014";
-		dataTimeStamp[10] = "14h30 29/06/2014";
+		/* Get most recently height */
+		String recentlyHeight = misc.parse(specData[8], "", "cm");
+		
+		String weight = misc.parse(specData[9], "", "kg");
+		
+		/* Get timestamp */
+		for(int i = 0; i < 4; i++) {
+			dataTime[i] = misc.parse(specData[i*2+1], "hr", "");
+		}
+		dataTime[4] = misc.parse(specData[8], "cm", "");
+		
+		dataTimeStamp[0] = misc.setTextDateAndTime(dataTime[0]);
+		dataTimeStamp[1] = misc.setTextDateAndTime(misc.parse(dataTime[1], 0, 12));
+		dataTimeStamp[2] = misc.setTextDateAndTime(misc.parse(dataTime[1], 12, 24));
+		dataTimeStamp[3] = misc.setTextDateAndTime(misc.parse(dataTime[1], 24));
+		dataTimeStamp[4] = misc.setTextDateAndTime(misc.parse(dataTime[2], 0, 12));
+		dataTimeStamp[5] = misc.setTextDateAndTime(misc.parse(dataTime[2], 12, 24));
+		dataTimeStamp[6] = misc.setTextDateAndTime(misc.parse(dataTime[2], 24));
+		dataTimeStamp[7] = misc.setTextDateAndTime(misc.parse(dataTime[3], 24));
+		dataTimeStamp[8] = misc.setTextDateAndTime(misc.parse(dataTime[3], 12, 24));
+		dataTimeStamp[9] = misc.setTextDateAndTime(misc.parse(dataTime[3], 24));
+		dataTimeStamp[10] = misc.setTextDateAndTime(dataTime[4]);
+		
+		/* Get Medical history information */
+		String[] history = new String[4];
+		history[0] = misc.parse(specData[10], 0, 1);
+		history[1] = misc.parse(specData[10], 1, 2);
+		history[2] = misc.parse(specData[10], 2, 3);
+		history[3] = misc.parse(specData[10], 3);
+		for(int i = 0; i < 4; i++) {
+			if(history[i].equals("0"))
+				history[i] = emptyBox;
+			else history[i] = fillBox;
+		}
 		
 		String htmlDetail = 
 				"<p><tt><b><font color=\"blue\"><u>Basic info</u>:</font></b></tt><br>"
@@ -146,16 +166,16 @@ public class DetailActivity extends Activity {
 				+hrLine
 				
 				+"<p><tt><b><font color=\"blue\"><u>Weight data</u>:</font></b></tt><br>"
-				+"_ Weekly weight <small>(kg)</small>: "
+				+"_ Weekly weight <small>(kg)</small>: <b><font color=\"red\">"+weight+"</font></b>."
 				+"</p>"
 				//===============================================================//
 				+hrLine
 				
 				+"<p><tt><b><font color=\"blue\"><u>Medical history</u>:</font></b></tt><br>"
-				+"&nbsp"+emptyBox+" Diabetes?<br>"
-				+"&nbsp"+emptyBox+" Dyslipidemia?<br>"
-				+"&nbsp"+emptyBox+" Atherosclerosis?<br>"
-				+"&nbsp"+fillBox+" Gout?"
+				+"&nbsp"+history[0]+" Diabetes?<br>"
+				+"&nbsp"+history[1]+" Dyslipidemia?<br>"
+				+"&nbsp"+history[2]+" Atherosclerosis?<br>"
+				+"&nbsp"+history[3]+" Gout?"
 				+"</p>";
 		
 		detail.loadDataWithBaseURL("file:///android_asset/", htmlDetail, "text/html", "UTF-8", null);
@@ -181,4 +201,20 @@ public class DetailActivity extends Activity {
 		return super.onOptionsItemSelected(item);
 	}
 
+	public String[] parseInfoFromDetailData(String data){
+		String[] ret = new String[11];
+		ret[0] = misc.parse(data, "", "recently");
+		ret[1] = misc.parse(data, "recently", "avgdate");
+		ret[2] = misc.parse(data, "avgdate", "peakdate");
+		ret[3] = misc.parse(data, "peakdate", "avgweek");
+		ret[4] = misc.parse(data, "avgweek", "peakweek");
+		ret[5] = misc.parse(data, "peakweek", "avgmonth");
+		ret[6] = misc.parse(data, "avgmonth", "peakmonth");
+		ret[7] = misc.parse(data, "peakmonth", "height");
+		ret[8] = misc.parse(data, "height", "weight");
+		ret[9] = misc.parse(data, "weight", "history");
+		ret[10] = misc.parse(data, "history", "");
+		
+		return ret;
+	}
 }
