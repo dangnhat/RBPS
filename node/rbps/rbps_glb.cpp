@@ -22,6 +22,7 @@ ISRMgr_ns::ISR_t keypad_timer = ISRMgr_ns::ISRMgr_TIM6;
 namespace rbps_ns {
 	OS_EventID main2znp_queue_id;
 	OS_EventID znp2main_queue_id;
+	uint16_t node_id = 0xFFFF;
 
 	static const uint8_t main2znp_queue_size = 128;
 	static const uint8_t znp2main_queue_size = 128;

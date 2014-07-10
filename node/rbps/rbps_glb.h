@@ -32,6 +32,8 @@ namespace rbps_ns {
 	/* extern global variables */
 	extern keypad node_keypad;
 	extern rbpm_gui node_gui;
+	extern uint16_t node_id; // node_id will be initialized after Zigbee stack has been
+							// started. 0xFFFF mean it's not ready to use.
 
 	/* Command id */
 	const uint16_t update_node_id = 0x0003; // out

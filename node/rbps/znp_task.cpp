@@ -56,6 +56,7 @@ OS_STK znp_task_stack[znp_task_stack_size];
 void znp_task_func(void *pdata) {
 	ZbStack_ns::Zb_callbackType_t zigbee_callback;
 	ZbStack_ns::Zb_dataStruct_s zigbee_data_s;
+	ZbStack_ns::Zb_deviceInfoParams_s device_info_s;
 
 	StatusType mesg_status;
 	void *mesg_p;
@@ -66,6 +67,13 @@ void znp_task_func(void *pdata) {
 
 	/* init Zigbee stack */
 	init_zigbee_stack();
+
+	/* get short address, assign to node id */
+	device_info_s.infoParam = ZbStack_ns::Zb_deviceShortAddr;
+	HA_ZbStack.Zb_deviceInfo_get(device_info_s);
+	node_id = device_info_s.values[0];
+	node_id = (device_info_s << 8) | node_id;
+	ZNP_TASK_PRINTF("znp_task:Zigbee stack started, node_id(short addr): %x\n", node_id);
 
 	while (1) {
 		/* check received data from Zigbee */
