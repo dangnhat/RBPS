@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/listView"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:stretchColumns="2" >
+
+    <TableRow
+        android:id="@+id/tableRow"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1" >
+
+        <RelativeLayout
+            android:id="@+id/firstFrag"
+            android:layout_width="fill_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1" >
+
+            <TextView
+                android:id="@+id/labelNodeID"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="2dp"
+                android:layout_marginTop="1dp"
+                android:layout_alignParentLeft="true"
+                android:text="@string/label_node_ID"
+                android:textColor="#040404"
+                android:textSize="15sp"
+                android:typeface="serif" />
+
+            <TextView
+                android:id="@+id/nID"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
+                android:layout_marginTop="1dp"
+                android:layout_toRightOf="@+id/labelNodeID"
+                android:textColor="#FF0000"
+                android:textSize="15sp"
+                android:textStyle="bold|italic"
+                android:typeface="serif" />
+            
+            <TextView
+                android:id="@+id/dotEndNode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="1dp"
+                android:layout_toRightOf="@+id/nID"
+                android:text="@string/dotEnd"
+                android:textColor="#040404"
+                android:textSize="15sp"
+                android:typeface="serif" />
+
+            <TextView
+                android:id="@+id/labelPatientID"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/labelNodeID"
+                android:layout_alignLeft="@+id/labelNodeID"
+                android:text="@string/label_patient_ID"
+                android:textColor="#040404"
+                android:textSize="15sp"
+                android:typeface="serif" />
+
+            <TextView
+                android:id="@+id/pID"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
+                android:layout_toRightOf="@+id/labelPatientID"
+                android:layout_below="@+id/labelNodeID"
+                android:textColor="#FF0000"
+                android:textSize="15sp"
+                android:textStyle="bold|italic"
+                android:typeface="serif" />
+            
+            <TextView
+                android:id="@+id/dotEndPatient"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@+id/pID"
+                android:layout_below="@+id/labelNodeID"
+                android:text="@string/dotEnd"
+                android:textColor="#040404"
+                android:textSize="15sp"
+                android:typeface="serif" />
+
+            <TextView
+                android:id="@+id/namePatient"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignLeft="@+id/labelNodeID"
+                android:layout_below="@+id/labelPatientID"
+                android:textColor="#FF0000"
+                android:textSize="15sp"
+                android:textStyle="bold|italic" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/secondFrag"
+            android:layout_width="fill_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_gravity="right" >
+
+            <ImageView
+                android:id="@+id/straight"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_toLeftOf="@+id/valueBP"
+                android:layout_marginRight="5dp"
+                android:layout_marginLeft="0dp"
+                android:contentDescription="@string/app_name"
+                android:src="@drawable/straight" />
+            
+            <TextView
+                android:id="@+id/valueBP"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="3dp"
+                android:layout_marginTop="1dp"
+                android:layout_alignParentRight="true"
+                android:textColor="#343434"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/valueHR"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/valueBP"
+                android:layout_alignLeft="@+id/valueBP"
+                android:textColor="#343434"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/timestamp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/valueHR"
+                android:layout_alignLeft="@+id/valueBP"
+                android:textColor="#343434"
+                android:textSize="15sp" />
+        </RelativeLayout>
+    </TableRow>
+
+</TableLayout>
