@@ -53,6 +53,32 @@ static const uint16_t output_cmds[output_cmds_num] = {
 OS_STK znp_task_stack[znp_task_stack_size];
 
 /*----------------------------------------------------------------------------*/
+static void init_zigbee_stack(void) {
+	 /* start ZbStack */
+	ZbStack_ns::Zb_appInfo_s appInfo_s;
+	appInfo_s.appEndPoint = app_endpoint;
+	appInfo_s.appProfileID = app_profile_id;
+	appInfo_s.deviceID = app_device_id;
+	appInfo_s.deviceVersion = app_device_version;
+	appInfo_s.inputCmdsNum = input_cmds_num;
+	memcpy(appInfo_s.inputCmdsList, input_cmds, input_cmds_num*sizeof(uint16_t));
+	appInfo_s.outputCmdsNum = output_cmds_num;
+	memcpy(appInfo_s.outputCmdsList, output_cmds, output_cmds_num*sizeof(uint16_t));
+
+	HA_ZNP.cmd_SPI_attach();
+	HA_ZNP.SPI_reInit();
+	HA_ZbStack.CONF_write(ZbStack_ns::ZCD_NV_startupOption, ZbStack_ns::ZCD_startOpt_noClear); // no clear state
+	HA_ZNP.sys_reset_hard();
+
+	HA_ZbStack.CONF_write(ZbStack_ns::ZCD_NV_logicalType, logic_type);
+	HA_ZbStack.CONF_write(ZbStack_ns::ZCD_NV_panID, pan_id);
+	HA_ZbStack.CONF_write(ZbStack_ns::ZCD_NV_chanList, channel_list);
+
+	HA_ZbStack.Zb_appRegister_request(appInfo_s);
+	HA_ZbStack.Zb_start_request();
+}
+
+/*----------------------------------------------------------------------------*/
 void znp_task_func(void *pdata) {
 	ZbStack_ns::Zb_callbackType_t zigbee_callback;
 	ZbStack_ns::Zb_dataStruct_s zigbee_data_s;
@@ -72,7 +98,7 @@ void znp_task_func(void *pdata) {
 	device_info_s.infoParam = ZbStack_ns::Zb_deviceShortAddr;
 	HA_ZbStack.Zb_deviceInfo_get(device_info_s);
 	node_id = device_info_s.values[0];
-	node_id = (device_info_s << 8) | node_id;
+	node_id = (device_info_s.values[1] << 8) | node_id;
 	ZNP_TASK_PRINTF("znp_task:Zigbee stack started, node_id(short addr): %x\n", node_id);
 
 	while (1) {
@@ -119,32 +145,6 @@ void znp_task_func(void *pdata) {
 			continue;
 		}
 	}/* end while (1) */
-}
-
-/*----------------------------------------------------------------------------*/
-static void init_zigbee_stack(void) {
-	 /* start ZbStack */
-	ZbStack_ns::Zb_appInfo_s appInfo_s;
-	appInfo_s.appEndPoint = app_endpoint;
-	appInfo_s.appProfileID = app_profile_id;
-	appInfo_s.deviceID = app_device_id;
-	appInfo_s.deviceVersion = app_device_version;
-	appInfo_s.inputCmdsNum = input_cmds_num;
-	memcpy(appInfo_s.inputCmdsList, input_cmds, input_cmds_num*sizeof(uint16_t));
-	appInfo_s.outputCmdsNum = output_cmds_num;
-	memcpy(appInfo_s.outputCmdsList, output_cmds, output_cmds_num*sizeof(uint16_t));
-
-	HA_ZNP.cmd_SPI_attach();
-	HA_ZNP.SPI_reInit();
-	HA_ZbStack.CONF_write(ZbStack_ns::ZCD_NV_startupOption, ZbStack_ns::ZCD_startOpt_noClear); // no clear state
-	HA_ZNP.sys_reset_hard();
-
-	HA_ZbStack.CONF_write(ZbStack_ns::ZCD_NV_logicalType, logic_type);
-	HA_ZbStack.CONF_write(ZbStack_ns::ZCD_NV_panID, pan_id);
-	HA_ZbStack.CONF_write(ZbStack_ns::ZCD_NV_chanList, channel_list);
-
-	HA_ZbStack.Zb_appRegister_request(appInfo_s);
-	HA_ZbStack.Zb_start_request();
 }
 
 /*----------------------------------------------------------------------------*/

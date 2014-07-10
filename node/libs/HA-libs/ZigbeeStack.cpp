@@ -645,7 +645,7 @@ void ZbStack::Zb_receiveDataIndication_get (Zb_dataStruct_s &aDataStruct_s){
     aDataStruct_s.srcAddr = ( ((uint16_t) callbackDataBuffer[1]) << 8 ) | ( (uint16_t) callbackDataBuffer[0] );
     aDataStruct_s.cmdID = ( ((uint16_t) callbackDataBuffer[3]) << 8 ) | ( (uint16_t) callbackDataBuffer[2] );
     aDataStruct_s.len = (callbackDataBuffer [5] << 8) | (callbackDataBuffer [4]);
-    aDataStruct_s.data_p = callbackDataBuffer + 6; //TODO : test this.
+    aDataStruct_s.data_p = callbackDataBuffer + 6;
 }
 
 /**
