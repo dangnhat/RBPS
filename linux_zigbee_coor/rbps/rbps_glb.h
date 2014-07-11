@@ -54,7 +54,7 @@ namespace rbps_ns {
 	extern int wi2cc_mq_id;
 
 	/* message mtext max size */
-	const uint8_t mtext_max_size = 2+3+255;
+	const uint8_t mtext_max_size = 3+255;
 	/* message type */
 	typedef struct mesg_s {
 		long mtype;
