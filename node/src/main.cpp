@@ -13,12 +13,14 @@
 #include "znp_task.h"
 
 int main (void) {
+	/* CoOS init */
+	CoInitOS();
+
 	/* System initialization */
 	MB1_system_init();
 	rbps_init();
 
-	/* Start OS */
-	CoInitOS();
+	/* Create task and start OS */
 	CoCreateTask(znp_task_func, 0, 0, &znp_task_stack[znp_task_stack_size-1], znp_task_stack_size);
 	CoStartOS();
 
