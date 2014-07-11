@@ -174,6 +174,7 @@ status_t CC2530ZNP::SPI_reInit (void){
     SPI_paramsStruct.direction = SPI_Direction_2Lines_FullDuplex;
     SPI_paramsStruct.mode = SPI_Mode_Master;
     SPI_paramsStruct.nss = SPI_NSS_Soft;
+    SPI_paramsStruct.crcPoly = 0x01;
     SPI_p->init (&SPI_paramsStruct);
 
     return successful;
@@ -394,9 +395,9 @@ bool CC2530ZNP::cmd_isNewMessage (void){
   */
 status_t CC2530ZNP::sys_reset_hard (void){
     GPIO_ResetBits (resetGPIO_port, resetGPIO_pin);
-    delay_ms (1);
+    delay_us (1000);
     GPIO_SetBits (resetGPIO_port, resetGPIO_pin);
-    delay_ms (3);
+    delay_us (3000);
 
     cmd_POLL ();
 
