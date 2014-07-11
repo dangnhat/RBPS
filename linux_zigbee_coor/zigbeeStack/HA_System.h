@@ -22,7 +22,6 @@ extern CC2530ZNP HA_ZNP;
 /**< ZbStack */
 extern ZbStack HA_ZbStack;
 
-
 /**<-------------- Global vars and objects in the HA_system ------------*/
 
 /**<-------------- HA_system_init ------------*/

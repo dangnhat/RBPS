@@ -146,7 +146,7 @@ typedef struct {
     uint8_t deviceVersion;
 
     uint8_t inputCmdsNum; // < Zb_numOfCmds_max
-    uint16_t inputCmdsList [Zb_numOfCmds_max]; //TODO: clarify this, LSB first ???, low order byte first ?
+    uint16_t inputCmdsList [Zb_numOfCmds_max];
     uint8_t outputCmdsNum;
     uint16_t outputCmdsList [Zb_numOfCmds_max];
 

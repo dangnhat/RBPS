@@ -11,8 +11,12 @@
  */
 
 #include <iostream>
+#include <sys/types.h>
+#include <sys/msg.h>
 #include "zigbee_thread.h"
+#include "rbps_glb.h"
 #include "HA_System.h"
+
 
 /* Debug definition */
 #if ZIGBEE_DEBUG
@@ -92,11 +96,14 @@ static void init_zigbee_stack(void) {
 }
 
 /*----------------------------------------------------------------------------*/
-void zigbee_thread_func(void *pdata) {
+void* zigbee_thread_func(void *pdata) {
 	ZbStack_ns::Zb_callbackType_t zigbee_callback;
 	ZbStack_ns::Zb_dataStruct_s zigbee_data_s;
 
 	mesg_t a_mesg;
+	int ret_val;
+	uint8_t ret_handle;
+	ZbStack_ns::status_t ret_status;
 
 	/* Init HA_system */
 	HA_system_init();
@@ -113,16 +120,14 @@ void zigbee_thread_func(void *pdata) {
 							zigbee_data_s.cmdID);
 
 			/* pack zigbee data to message */
-			a_mesg.mtype = 1; // don't care this value, but it's should be > 0.
-			a_mesg.mtext[0] = (uint8_t) zigbee_data_s.srcAddr;
-			a_mesg.mtext[1] = (uint8_t) (zigbee_data_s.srcAddr >> 8);
-			a_mesg.mtext[2] = (uint8_t) zigbee_data_s.len;
-			a_mesg.mtext[3] = (uint8_t) zigbee_data_s.cmdID;
-			a_mesg.mtext[4] = (uint8_t) (zigbee_data_s.cmdID >> 8);
-			memcpy(&a_mesg.mtext[5], zigbee_data_s.data_p, (uint8_t) zigbee_data_s.len);
+			a_mesg.mtype = zigbee_data_s.srcAddr; // don't care this value, but it's should be > 0.
+			a_mesg.mtext[0] = (uint8_t) zigbee_data_s.len;
+			a_mesg.mtext[1] = (uint8_t) zigbee_data_s.cmdID;
+			a_mesg.mtext[2] = (uint8_t) (zigbee_data_s.cmdID >> 8);
+			memcpy(&a_mesg.mtext[3], zigbee_data_s.data_p, (uint8_t) zigbee_data_s.len);
 
 			/* send message to cc thread */
-			if (msgsnd(zb2cc_mq_id, (const void *)&a_mesg, zigbee_data_s.len +2 +3, 0) == 0) {
+			if (msgsnd(zb2cc_mq_id, (const void *)&a_mesg, zigbee_data_s.len +3, 0) == 0) {
 				ZIGBEE_PRINTF("zigbee_thread:Sent message to zb2cc_mq(%d)\n", zb2cc_mq_id);
 			}
 			else {
@@ -134,6 +139,34 @@ void zigbee_thread_func(void *pdata) {
 		}/* end if */
 
 		/* check received data from cc */
+		ret_val = msgrcv(cc2zb_mq_id, &a_mesg, mtext_max_size, 0, IPC_NOWAIT);
+		if (ret_val > 0) {
+			ZIGBEE_PRINTF("zigbee_thread:Received mesg from cc\n");
+
+			/* send mesg to Zigbee */
+			zigbee_data_s.destAddr = a_mesg.mtype;
+			zigbee_data_s.len = a_mesg.mtext[0];
+			zigbee_data_s.cmdID = a_mesg.mtext[1] | (a_mesg.mtext[2] << 8);
+			zigbee_data_s.data_p = (uint8_t *)&a_mesg.mtext[3];
+			HA_ZbStack.Zb_sendData_request(zigbee_data_s, 1, true, 10);
+			ZIGBEE_PRINTF("zigbee_thread:Sent data to ZNP, destAddr %x, len %x, cmdID %x\n",
+					zigbee_data_s.destAddr, zigbee_data_s.len, zigbee_data_s.cmdID);
+
+			/* wait for Send data confirm */
+			while (1) {
+				HA_ZbStack.Zb_callback_get(zigbee_callback);
+				if (zigbee_callback == ZbStack_ns::Zb_sendDataConfirm) {
+					HA_ZbStack.Zb_sendDataConfirm_get(ret_handle, ret_status);
+					ZIGBEE_PRINTF("zigbee_thread:Received send data confirm, handle %d, status %x",
+							ret_handle, ret_status);
+					break;
+				}// end if
+			}/* end while (1) */
+
+			continue;
+		}
 
 	}/* end while (1) */
+
+	return 0;
 }

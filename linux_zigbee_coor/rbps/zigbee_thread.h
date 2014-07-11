@@ -23,7 +23,7 @@
  *
  * @return      NERVER RETURN
  */
-void zigbee_thread_func(void *pdata);
+void* zigbee_thread_func(void *pdata);
 
 /** @} */
 #endif //ZIGBEE_THREAD_H_
