@@ -1,0 +1,5 @@
+Zigbee thread to controller thread format:
+/************************************************/
+/*  2 (bytes)           |       3 - 258         */
+/* device short addr    |   general frame format*/
+/************************************************/
