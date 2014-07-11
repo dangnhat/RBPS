@@ -5,8 +5,8 @@
 
 #------------------------- CONFIG INTERFACE -----------------------------------#
 #location of source files and include files
-SRCLOC = usartLib/ zigbeeStack/
-INCLOC = usartLib/ zigbeeStack/
+SRCLOC = usartLib/ zigbeeStack/ rbps/
+INCLOC = usartLib/ zigbeeStack/ rbps/
 
 #location of binary and object files
 BINDIR = bin
