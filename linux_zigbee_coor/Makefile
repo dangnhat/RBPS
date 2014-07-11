@@ -27,7 +27,7 @@ LK = gcc
 CFLAGS = $(addprefix -I, ${INCLOC}) -std=gnu99 -O0 -g3
 CXXUWFLAGS = -std=gnu99
 CXXEXFLAGS = -std=gnu++11
-LKFLAGS =
+LKFLAGS = -lpthread
 
 #string array of all source files and object files
 SRC = $(notdir $(wildcard *.c $(addsuffix *.c, ${SRCLOC} )))
@@ -44,7 +44,7 @@ CPPMIX=$(if $(OBJCXX),1,)
 
 all: $(OBJ)
 	@echo "Linking..."
-	$(if $(CPPMIX),$(CXX),$(LK)) ${LKFLAGS} $^ -o ${BINDIR}/${EXEFILE}
+	$(if $(CPPMIX),$(CXX),$(LK)) $^ -o ${BINDIR}/${EXEFILE} ${LKFLAGS}
 	@echo
 	@echo "Finished"; echo
 	
