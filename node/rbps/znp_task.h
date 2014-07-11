@@ -31,10 +31,5 @@ extern OS_STK znp_task_stack[znp_task_stack_size];
  */
 void znp_task_func(void *pdata);
 
-/**
- * @brief   init zigbee stack with configuration in config interface of znp_task.cpp
- */
-static void init_zigbee_stack(void);
-
 /** @} */
 #endif //ZNP_TASK_H_

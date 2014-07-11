@@ -53,7 +53,13 @@ static const uint16_t output_cmds[output_cmds_num] = {
 OS_STK znp_task_stack[znp_task_stack_size];
 
 /*----------------------------------------------------------------------------*/
+/**
+ * @brief   init zigbee stack with configuration in config interface of znp_task.cpp
+ */
 static void init_zigbee_stack(void) {
+	ZbStack_ns::Zb_callbackType_t zigbee_callback;
+	ZbStack_ns::Zb_startConfirmStatus_t start_confirm_status;
+
 	 /* start ZbStack */
 	ZbStack_ns::Zb_appInfo_s appInfo_s;
 	appInfo_s.appEndPoint = app_endpoint;
@@ -67,7 +73,8 @@ static void init_zigbee_stack(void) {
 
 	HA_ZNP.cmd_SPI_attach();
 	HA_ZNP.SPI_reInit();
-	HA_ZbStack.CONF_write(ZbStack_ns::ZCD_NV_startupOption, ZbStack_ns::ZCD_startOpt_noClear); // no clear state
+	HA_ZbStack.CONF_write(ZbStack_ns::ZCD_NV_startupOption, ZbStack_ns::ZCD_startOpt_noClear);
+	// no clear state
 	HA_ZNP.sys_reset_hard();
 
 	HA_ZbStack.CONF_write(ZbStack_ns::ZCD_NV_logicalType, logic_type);
@@ -76,6 +83,19 @@ static void init_zigbee_stack(void) {
 
 	HA_ZbStack.Zb_appRegister_request(appInfo_s);
 	HA_ZbStack.Zb_start_request();
+
+	/* wait for start confirm */
+	ZNP_TASK_PRINTF("znp_task:Requested to start Zigbee stack, wait for start confirm\n");
+	while (1){
+		HA_ZbStack.Zb_callback_get(zigbee_callback);
+
+		if (zigbee_callback == ZbStack_ns::Zb_startConfirm){
+			HA_ZbStack.Zb_startConfirm_get(start_confirm_status);
+			if (start_confirm_status == ZbStack_ns::Zb_success)
+				break;
+		}
+	}
+	ZNP_TASK_PRINTF("znp_task:Zigbee stack started\n");
 }
 
 /*----------------------------------------------------------------------------*/
