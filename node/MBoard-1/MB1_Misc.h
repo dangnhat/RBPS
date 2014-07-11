@@ -25,7 +25,9 @@ extern uint16_t miscTIM_period; // in msec.
 /* Prototypes */
 void bugs_fix (void);
 
-void delay_ms (uint32_t msec);
+void delay_us(uint32_t usec); // thread safe
+
+void delay_ms (uint32_t msec); // NOT thread safe,
 void delay_ms_miscTIMISR (void); // It should be placed in miscTIMISR.
 
 void miscTIM_run (TIM_TypeDef *miscTIM, uint16_t prescaler, uint16_t reloadVal);

@@ -108,7 +108,7 @@ const uint8_t MB1_conf_USART2_retarget = USART_stdStream_stdout;
 
 /**< for ISRs */
 const bool MB1_conf_LedBeat_isUsed = true;
-const bool MB1_conf_delayms_isUsed = true;
+const bool MB1_conf_delayms_isUsed = false;
 const bool MB1_conf_btnProcessing_isUsed = true;
 /**< for ISRs */
 

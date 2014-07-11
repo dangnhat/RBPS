@@ -15,7 +15,7 @@ static int16_t LedBeat_count = -1; // for IRQ of Led Beat
 static Led *LedBeat_LedPtr = NULL;
 uint16_t ledBeat_period = 0;
 
-static uint32_t Delayms_count = 0; // for IRQ of Delayms
+static volatile uint32_t Delayms_count = 0; // for IRQ of Delayms
 
 uint16_t miscTIM_period = 0;
 
@@ -132,6 +132,21 @@ void LedBeat_miscTIMISR (void){
     }
 
     return;
+}
+
+/**
+ * @brief delay_us (uint32_t usec)
+ * @param uint32_t usec : time of delay in usec.
+ * @return void
+ * Delay at least usec. Thread safe. Use global var: SystemCoreClock
+ */
+void delay_us(uint32_t usec) {
+	uint32_t num_of_clockcycles = SystemCoreClock/1000000 * usec;
+	uint32_t count;
+
+	for (count = 0; count < num_of_clockcycles; count++) {
+		__asm__ __volatile__("nop");
+	}
 }
 
 /**
