@@ -33,7 +33,7 @@ namespace rbps_ns {
 	extern keypad node_keypad;
 	extern rbpm_gui node_gui;
 	extern uint16_t node_id; // node_id will be initialized after Zigbee stack has been
-							// started. 0xFFFF mean it's not ready to use.
+							// started.
 	static const uint16_t coor_short_addr = 0x0000;
 
 	/* Command id */
