@@ -107,6 +107,8 @@ void znp_task_func(void *pdata) {
 	StatusType mesg_status;
 	void *mesg_p;
 	uint8_t send_data_buffer[100];
+	uint8_t ret_handle;
+	ZbStack_ns::status_t ret_status;
 
 	/* Init HA_system */
 	HA_system_init();
@@ -157,9 +159,20 @@ void znp_task_func(void *pdata) {
 			zigbee_data_s.data_p = send_data_buffer;
 			zigbee_data_s.destAddr = coor_short_addr;
 
-			HA_ZbStack.Zb_sendData_request(zigbee_data_s, 0x01, false, 10);
+			HA_ZbStack.Zb_sendData_request(zigbee_data_s, 0x01, true, 10);
 			ZNP_TASK_PRINTF("znp_task:Sent data (cmd: %u, len: %u) to Coor (%u)",
 					zigbee_data_s.cmdID, zigbee_data_s.len, zigbee_data_s.destAddr);
+
+			/* wait for Send data confirm */
+			while (1) {
+				HA_ZbStack.Zb_callback_get(zigbee_callback);
+				if (zigbee_callback == ZbStack_ns::Zb_sendDataConfirm) {
+					HA_ZbStack.Zb_sendDataConfirm_get(ret_handle, ret_status);
+					ZNP_TASK_PRINTF("znp_task:Received send data confirm, handle %d, status %x",
+							ret_handle, ret_status);
+					break;
+				}// end if
+			}/* end while (1) */
 
 			/* continue */
 			continue;
