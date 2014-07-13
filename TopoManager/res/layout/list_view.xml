@@ -96,6 +96,15 @@
                 android:textColor="#FF0000"
                 android:textSize="15sp"
                 android:textStyle="bold|italic" />
+            
+            <TextView
+                android:id="@+id/scheduleText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignLeft="@+id/labelNodeID"
+                android:layout_below="@+id/namePatient"
+                android:textColor="#343434"
+                android:textSize="15sp" />
         </RelativeLayout>
 
         <RelativeLayout

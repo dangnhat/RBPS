@@ -4,6 +4,7 @@ public class NodeInfo {
 	private String name;
 	private String nID;
 	private String pID;
+	private String isSche;
 	private String valueSysBP;
 	private String valueDiasBP;
 	private String valueHR;
@@ -16,6 +17,10 @@ public class NodeInfo {
 		this.nID = nodeID;
 		this.pID = patientID;
 		this.name = name;
+	}
+	
+	public void setIsSchedule(String isSchedule) {
+		this.isSche = isSchedule;
 	}
 	
 	public void setBpValue(String valueSysBp, String valueDiasBp) {
@@ -49,6 +54,10 @@ public class NodeInfo {
 	
 	public String getName() {
 		return this.name;
+	}
+	
+	public String getIsSchedule() {
+		return this.isSche;
 	}
 	
 	public String getSysBpValue() {

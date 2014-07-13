@@ -11,6 +11,7 @@ public class CustomListView extends TableLayout{
 	TextView nIdView;
 	TextView pIdView;
 	TextView nameView;
+	TextView scheduleView;
 	TextView valueBpView;
 	TextView valueHrView;
 	TextView timestampView;
@@ -25,6 +26,7 @@ public class CustomListView extends TableLayout{
 		this.nIdView = (TextView)findViewById(R.id.nID);
 		this.pIdView = (TextView)findViewById(R.id.pID);
 		this.nameView = (TextView)findViewById(R.id.namePatient);
+		this.scheduleView = (TextView)findViewById(R.id.scheduleText);
 		this.valueBpView = (TextView)findViewById(R.id.valueBP);
 		this.valueHrView = (TextView)findViewById(R.id.valueHR);
 		this.timestampView = (TextView)findViewById(R.id.timestamp);

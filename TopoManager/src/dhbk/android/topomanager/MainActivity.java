@@ -39,8 +39,8 @@ public class MainActivity extends Activity {
 	public static PrintWriter out;
 	public static BufferedReader in;
 	public static String DATA = ""; //frame.
-//	public static String RESULT = ""; // "CMDcDATA" leter c is in between command and data.
 	public static String chosenPatientId = "";
+	public final int maxSizeBuffer = 258;
 	public static boolean conn = false;
 	public static boolean useIpDefault = true;
 	private Misc parser = new Misc();
@@ -57,6 +57,20 @@ public class MainActivity extends Activity {
 	private final String detailCmd = "3";
 	private final String predictCmd = "4";
 	private final String scheduleCmd = "5";
+	
+	private final char scan = 0x01;
+	private final char measure = 0x04;
+	private final char detail_info = 0x14;
+	private final char detail_bp = 0x05;
+	private final char detail_hr = 0x07;
+	private final char detail_height = 0x09;
+	private final char detail_weight = 0x0B;
+	private final char detail_history = 0x0D;
+	private final char predict = 0x0F;
+	private final char get_schedule = 0x19;
+	
+	private final char common_length = 4;
+	private final char new_schedule_length = 10;
 	
 	/* what of massages of handler */
 	private final int report = 1;
@@ -84,31 +98,56 @@ public class MainActivity extends Activity {
         		notifyToast("Streams error. Please connect again!", Toast.LENGTH_SHORT);
         	}else {
         		String result = (String) msg.obj;
+        		String cmd = parser.parse(result, "", "cmd");
         		String data = parser.parse(result, "cmd", "");
-        		Log.d("data", data);
+        		String sysData = nullSysBp;
+        		String diasData = nullDiasBpHr;
+        		String hrData = nullDiasBpHr;
+        		String timestamp = "";
+        		String schedule = "No schedule";
 
         		String nID = parser.parse(data, "", "n");
         		String pID = parser.parse(data, "n", "p");
-	        	String name = parser.parse(data, "p", "");
-
-	        	/* Update node on list view */
-	    		NodeInfo nInfo = new NodeInfo(nID, pID, name);
-	    		nInfo.setBpValue(nullSysBp, nullDiasBpHr);
-	    		nInfo.setHrValue(nullDiasBpHr);
-	    		nInfo.setDateAndTimeStampOrNotice("", false);
-	    		addNode(0, nInfo);
-	    		
-	    		nInfo = new NodeInfo("2", "2", "Nguyen Van Hien");
-	    		nInfo.setBpValue("113", "69");
-	    		nInfo.setHrValue("79");
-	    		nInfo.setDateAndTimeStampOrNotice("Waiting...", false);
-	    		addNode(1, nInfo);
-	    		
-	    		nInfo = new NodeInfo("3", "3", "Nguyen Van Hien");
-	    		nInfo.setBpValue("113", "69");
-	    		nInfo.setHrValue("79");
-	    		nInfo.setDateAndTimeStampOrNotice("Waiting...", false);
-	    		addNode(2, nInfo);
+	        	String name = parser.parse(data, "p", "schedule");
+	        	String isSchedule = parser.parse(data, "schedule", "measure");
+	        	if(isSchedule.equals("1"))
+	        		schedule = "Scheduled";
+	        	if(cmd.equals(scanCmd)) {	
+		        	/* List node on list view */
+		    		NodeInfo nInfo = new NodeInfo(nID, pID, name);
+		    		nInfo.setIsSchedule(schedule);
+		    		nInfo.setBpValue(sysData, diasData);
+		    		nInfo.setHrValue(hrData);
+		    		nInfo.setDateAndTimeStampOrNotice(timestamp, false);
+		    		addNode(nInfo);
+		    		nInfo = new NodeInfo("2", "2", "Nguyen Van Hien");
+		    		nInfo.setIsSchedule("Scheduled");
+		    		nInfo.setBpValue("112", "69");
+		    		nInfo.setHrValue("70");
+		    		nInfo.setDateAndTimeStampOrNotice("133212072014", true);
+		    		addNode(nInfo);
+	        	}else if(cmd.equals(measureCmd)) {
+	        		/* Update node on view */
+	        		sysData = parser.parse(data, "measure", "sys");
+	        		diasData = parser.parse(data, "sys", "dias");
+	        		hrData = parser.parse(data, "dias", "hr");
+	        		timestamp = parser.parse(data, "hr", "");
+	        		if(arrayNode != null) {
+	        			NodeInfo chosenNode = searchNode(pID);
+	        			if(chosenNode != null) {
+	        				Log.d("node", "ok");
+	        				chosenNode.setBpValue(sysData, diasData);
+	        				chosenNode.setHrValue(hrData);
+		        			chosenNode.setDateAndTimeStampOrNotice(timestamp, true);
+	        			}
+	        			Log.d("node", "eko");
+	        		}
+	        	}else if(cmd.equals(scheduleCmd)) {
+	        		if(arrayNode != null) {
+	        			NodeInfo chosenNode = searchNode(pID);
+	        			chosenNode.setIsSchedule(schedule);
+	        		}
+	        	}
 	    		
 	    		topoView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 	    			@Override
@@ -140,27 +179,37 @@ public class MainActivity extends Activity {
 					try{
 			            String line = "";
 			            String result = "";
+			            char[] ret = new char[maxSizeBuffer];
 			            while(conn) {	//do while still connect and no button is chosen.
-			            	line = in.readLine().toString();
-			            	if(line.equalsIgnoreCase("end")) {
-			            		Log.d("result1", result);
-					            Message msg = handler.obtainMessage(report, (Object)result);
-					            handler.sendMessage(msg);
-					            result = "";
-			            	}
-			            	result += line;
+			            	in.read(ret);
+			            	String s = "";
+		            		int[] t = new int[maxSizeBuffer];
+		            		for(int i = 0; i < maxSizeBuffer-1; i++) {
+		            			t[i] = (int)ret[i];
+		            			s += String.valueOf(t[i]);
+		            		}
+		            		s += String.valueOf(ret[257]);
+		            		Log.d("rcv", s);
+//		            		line = in.readLine().toString();
+//			            	if(line.equalsIgnoreCase("end")) {
+//					            Message msg = handler.obtainMessage(report, (Object)result);
+//					            handler.sendMessage(msg);
+//					            result = "";
+//			            	}
+//			            	result += line;
 			            }
 			        }catch(Exception e) {
 			        	Message msg = handler.obtainMessage(streamError);
 			            handler.sendMessage(msg);
+			            e.printStackTrace();
 			        }
 				}
 			}
 		}
 	});
 	
-	public void addNode(int index, NodeInfo node) {
-		arrayNode.add(index, node);
+	public void addNode(NodeInfo node) {
+		arrayNode.add(node);
 		arrNodeAdapter.notifyDataSetChanged();
 	}
 	
@@ -191,7 +240,13 @@ public class MainActivity extends Activity {
 		arrayNode = new ArrayList<NodeInfo>();
 		arrNodeAdapter = new CustomListAdapter(MainActivity.this, R.layout.list_view, arrayNode);
 		topoView.setAdapter(arrNodeAdapter);
-
+//		char a = 0x0a;
+//		int i = (int)a;
+//		if(i == 0x0a)
+//			Log.d("ok", "eko");
+//		char b = 'a';
+//		String s = String.valueOf(b);
+//		Log.d("dduuf", s);
 		/* Try to connecting to the server */
 		conn = tryConnect(useIpDefault, SERVER_IP_DEFAULT, SERVER_IP);
 		if(conn)
@@ -199,8 +254,10 @@ public class MainActivity extends Activity {
 
 		/* Always run the background thread */
 		background.start();
-//		Message msg = handler.obtainMessage(report, (Object)"1cmd1n1pnvhien");
-//        handler.sendMessage(msg);
+		Message msg = handler.obtainMessage(report, (Object)"1cmd1n1pPham Huu Dang Nhatschedule0measure");
+        handler.sendMessage(msg);
+		msg = handler.obtainMessage(report, (Object)"2cmd1n1pnvhienschedule0measure112sys69dias70hr133012072014");
+        handler.sendMessage(msg);
 	}
 	
 	@Override
@@ -209,8 +266,11 @@ public class MainActivity extends Activity {
         try {
         	conn = false;
         	socketBackground.close();
-        	socketTemp.close();
-		} catch (IOException e) {}
+        	if(socketTemp != null)
+        		socketTemp.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
         notifyToast("Closed!", Toast.LENGTH_SHORT);
     }
 
@@ -384,22 +444,22 @@ public class MainActivity extends Activity {
 				/* Create a frame */
 	            DATA = createDataFrame(detailCmd, chosenPatientId);
 				new socketWorker(DATA).execute();
-				
+				/* new intent */
 				activityIntent = new Intent(this, DetailActivity.class);
 			}
 		}else {
 			notifyToast("No connection. Please connect again!", Toast.LENGTH_SHORT);
-//			RESULT = "1n1pNvhien"
-//					+ "recently110sys66dias78hr164010072014"
-//					+ "avgdate112sys69dias69hrpeakdate113sys70dias70hr124007072014130306072014173408072014"
-//					+ "avgweek112sys69dias69hrpeakweek113sys70dias70hr124007072014130306072014173408072014"
-//					+ "avgmonth112sys69dias69hrpeakmonth113sys70dias70hr124007072014130306072014173408072014"
-//					+ "height170cm144504062013"
-//					+ "weight60kg130407072014"
-//					+ "history0000";
-//			Intent activityIntent = new Intent(this, DetailActivity.class);
-//			activityIntent.putExtras(createBundle("detailInfo", RESULT));
-//			startActivity(activityIntent);
+			String result = "1n1pPham Huu Dang Nhat"
+					+ "recently110sys66dias78hr164010072014"
+					+ "avgdate112sys69dias69hrpeakdate113sys70dias70hr124007072014130306072014173408072014"
+					+ "avgweek112sys69dias69hrpeakweek113sys70dias70hr124007072014130306072014173408072014"
+					+ "avgmonth112sys69dias69hrpeakmonth113sys70dias70hr124007072014130306072014173408072014"
+					+ "height170cm144504062013"
+					+ "weight60kg130407072014"
+					+ "history0000";
+			Intent activityIntent = new Intent(this, DetailActivity.class);
+			activityIntent.putExtras(createBundle("data", result));
+			startActivity(activityIntent);
 		}
 		
 		return;
@@ -414,18 +474,18 @@ public class MainActivity extends Activity {
 				/* Create a frame */
 	            DATA = createDataFrame(predictCmd, chosenPatientId);
 	            new socketWorker(DATA).execute();
-	            
+	            /* new intent */
 				activityIntent = new Intent(this, PredictActivity.class);
 			}
 		}else {
 			notifyToast("No connection. Please connect again!", Toast.LENGTH_SHORT);
-//			RESULT = "1n1pNvhien"
-//					+ "prehyper0"
-//					+ "avgmonth137sys69dias69hr21.5"
-//					+ "history0001";
-//			Intent activityIntent = new Intent(this, PredictActivity.class);
-//			activityIntent.putExtras(createBundle("predictInfo", RESULT));
-//			startActivity(activityIntent);
+			String result = "1n1pPham Huu Dang Nhat"
+					+ "prehyper1"
+					+ "avgmonth137sys69dias69hr21.5"
+					+ "history0001";
+			Intent activityIntent = new Intent(this, PredictActivity.class);
+			activityIntent.putExtras(createBundle("data", result));
+			startActivity(activityIntent);
 		}
 		
 		return;		
@@ -440,16 +500,16 @@ public class MainActivity extends Activity {
 				/* Create a frame */
 	            DATA = createDataFrame(scheduleCmd, chosenPatientId);
 				new socketWorker(DATA).execute();
-				
+				/* new intent */
 				activityIntent = new Intent(this, ScheduleActivity.class);
 			}
 		}else {
 			notifyToast("No connection. Please connect again!", Toast.LENGTH_SHORT);
-//			RESULT = "1schedule"
-//					+ "0abs124509072014";
-//			Intent activityIntent = new Intent(this, ScheduleActivity.class);
-//			activityIntent.putExtras(createBundle("scheduleInfo", RESULT));
-//			startActivity(activityIntent);
+			String result = "1schedule"
+					+ "1abs124513072014";
+			Intent activityIntent = new Intent(this, ScheduleActivity.class);
+			activityIntent.putExtras(createBundle("data", result));
+			startActivity(activityIntent);
 		}
 		
 		return;		
@@ -525,6 +585,7 @@ public class MainActivity extends Activity {
 				notifyToast("Transfering error! Please connect again!", Toast.LENGTH_SHORT);
 			}else {
 				notifyToast("Done!", Toast.LENGTH_SHORT);
+				Log.d("result", result);
 				activityIntent.putExtras(createBundle("data", result));
 				startActivity(activityIntent);
 			}
@@ -595,6 +656,16 @@ public class MainActivity extends Activity {
 		synchronized (monitorObject) {
 			monitorObject.notify();
 		}
+	}
+	
+	public NodeInfo searchNode(String pID) {
+		NodeInfo chosenNode = null;
+		for(int i = 0; i < arrayNode.size(); i++) {
+			if(arrayNode.get(i).getPatientId().equals(pID))
+				chosenNode = arrayNode.get(i);
+		} 
+		
+		return chosenNode;
 	}
 	
 }

@@ -25,6 +25,8 @@ public class ScheduleActivity extends Activity {
 	final String SERVER_IP_DEFAULT = "192.168.150.1";
 	public final String newScheduleCmd = "11";
 	public final String clearScheduleCmd = "12";
+	private final char new_schedule = 0x11;
+	private final char clear_schedule = 0x0001;
 	CheckBox scheduleCheck;
 	CheckBox absCheck;
 	CheckBox relativeCheck;

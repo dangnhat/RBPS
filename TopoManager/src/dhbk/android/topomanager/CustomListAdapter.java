@@ -19,6 +19,7 @@ public class CustomListAdapter extends ArrayAdapter<NodeInfo> {
 	public TextView nIdView;
 	public TextView pIdView;
 	public TextView nameView;
+	public TextView scheduleView;
 	public TextView valueBpView;
 	public TextView valueHrView;
 	public TextView timestampView;
@@ -43,6 +44,7 @@ public class CustomListAdapter extends ArrayAdapter<NodeInfo> {
 			nIdView = ((CustomListView)nodeView).nIdView;
 			pIdView = ((CustomListView)nodeView).pIdView;
 			nameView = ((CustomListView)nodeView).nameView;
+			scheduleView = ((CustomListView)nodeView).scheduleView;
 			valueBpView = ((CustomListView)nodeView).valueBpView;
 			valueHrView = ((CustomListView)nodeView).valueHrView;
 			timestampView = ((CustomListView)nodeView).timestampView;
@@ -51,6 +53,7 @@ public class CustomListAdapter extends ArrayAdapter<NodeInfo> {
 			nIdView.setText(nodeInfo.getNodeId());
 			pIdView.setText(nodeInfo.getPatientId());
 			nameView.setText(nodeInfo.getName());
+			scheduleView.setText(nodeInfo.getIsSchedule());
 			
 			String htmlValueBP = convertValueBP2Html(nodeInfo.getSysBpValue(), nodeInfo.getDiasBpValue());
 			String htmlValueHR = convertValueHR2Html(nodeInfo.getHrValue());
