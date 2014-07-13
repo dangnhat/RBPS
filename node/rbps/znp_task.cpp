@@ -75,7 +75,7 @@ void znp_task_func(void *pdata) {
 			zigbee_data_s.destAddr = coor_short_addr;
 
 			HA_ZbStack.Zb_sendData_request(zigbee_data_s, 0x01, true, 10);
-			ZNP_TASK_PRINTF("znp_task:Sent data (cmd: %u, len: %u) to Coor (%u)",
+			ZNP_TASK_PRINTF("znp_task:Sent data (cmd: %u, len: %u) to Coor (%u)\n",
 					zigbee_data_s.cmdID, zigbee_data_s.len, zigbee_data_s.destAddr);
 
 			/* wait for Send data confirm */
@@ -83,7 +83,7 @@ void znp_task_func(void *pdata) {
 				HA_ZbStack.Zb_callback_get(zigbee_callback);
 				if (zigbee_callback == ZbStack_ns::Zb_sendDataConfirm) {
 					HA_ZbStack.Zb_sendDataConfirm_get(ret_handle, ret_status);
-					ZNP_TASK_PRINTF("znp_task:Received send data confirm, handle %d, status %x",
+					ZNP_TASK_PRINTF("znp_task:Received send data confirm, handle %d, status %x\n",
 							ret_handle, ret_status);
 					break;
 				}// end if
