@@ -151,6 +151,14 @@
                 android:layout_alignLeft="@+id/valueBP"
                 android:textColor="#343434"
                 android:textSize="15sp" />
+            <TextView
+                android:id="@+id/notice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/timestamp"
+                android:layout_alignLeft="@+id/valueBP"
+                android:textColor="#343434"
+                android:textSize="15sp" />
         </RelativeLayout>
     </TableRow>
 

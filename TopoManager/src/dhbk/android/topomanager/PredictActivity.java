@@ -28,19 +28,27 @@ public class PredictActivity extends Activity {
 		/* Get extras from MainActivity */
 		Intent intent = getIntent();
 		Bundle bundle = intent.getExtras();
-		String predictData = bundle.getString("data");
+		String basic_info = bundle.getString("basic_info");
+		char[] predictData = bundle.getCharArray("predict");
+		
 		
 		/* Parse data from extra */
-		specData = parseInfoFromPredictData(predictData);
+		char prehypertension_risk = predictData[3];
+		char[] arrSysBpDec = misc.subCharArray(predictData, 4, 2);
+		char[] arrSysBpFrac = misc.subCharArray(predictData, 6, 2);
+		char[] arrDiasBp = misc.subCharArray(predictData, 8, 2); 
+		char[] arrHr = misc.subCharArray(predictData, 12, 2);
+		char[] arrBmi = misc.subCharArray(predictData, 16, 4); 
+		char[] arrHistory = misc.subCharArray(predictData, 20, 4);
 		
 		/* Get basic information */
-		String nID = misc.parse(specData[0], "", "n");
-		String pID = misc.parse(specData[0], "n", "p");
-		String name = misc.parse(specData[0], "p", "");
+		String nID = misc.parse(basic_info, "", "n");
+		String pID = misc.parse(basic_info, "n", "p");
+		String name = misc.parse(basic_info, "p", "");
 		
 		/* Risk of prehypertension */
 		String riskPrehyper, colorWarnRiskPrehyper;
-		if(specData[1].equals("1")) {
+		if(prehypertension_risk == 1) {
 			riskPrehyper = "Yes";
 			colorWarnRiskPrehyper = "red";
 		}else {
@@ -53,6 +61,7 @@ public class PredictActivity extends Activity {
 		int sysBP = Integer.parseInt(monthlyAvgSysBp);
 		String monthlyAvgDiasBp = misc.parse(specData[2], "sys", "dias");
 		int diasBP = Integer.parseInt(monthlyAvgDiasBp);
+		
 		String colorSysBp = "green";
 		String colorDiasBp = "blue";
 		String highSys = emptyBox;
@@ -77,7 +86,7 @@ public class PredictActivity extends Activity {
 		history[2] = misc.parse(specData[3], 2, 3);
 		history[3] = misc.parse(specData[3], 3);
 		for(int i = 0; i < 4; i++) {
-			if(history[i].equals("0"))
+			if(arrHistory[i] == 0)
 				history[i] = emptyBox;
 			else history[i] = fillBox;
 		}

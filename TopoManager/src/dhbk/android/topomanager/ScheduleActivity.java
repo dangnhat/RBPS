@@ -67,8 +67,8 @@ public class ScheduleActivity extends Activity {
 			bigLayout.setVisibility(View.VISIBLE);
 			scheduleCheck.setChecked(true);
 			timeScheduled = misc.parse(scheduleInfo, "abs", "");
-			hour = misc.getHour(timeScheduled);
-			min = misc.getMinute(timeScheduled);
+			hour = misc.getHourFromString(timeScheduled);
+			min = misc.getMinuteFromString(timeScheduled);
 			hourIn.setText(hour);
 			minIn.setText(min);
 			isAbs = misc.parse(scheduleInfo, "schedule", "abs");
@@ -76,9 +76,9 @@ public class ScheduleActivity extends Activity {
 				absCheck.setChecked(true);
 				relativeCheck.setChecked(false);
 				dateLayout.setVisibility(View.VISIBLE);
-				date = misc.getDate(timeScheduled);
-				month = misc.getMonth(timeScheduled);
-				year = misc.getYear(timeScheduled);
+				date = misc.getDateFromString(timeScheduled);
+				month = misc.getMonthFromString(timeScheduled);
+				year = misc.getYearFromString(timeScheduled);
 				dateIn.setText(date);
 				monthIn.setText(month);
 				yearIn.setText(year);
@@ -127,11 +127,11 @@ public class ScheduleActivity extends Activity {
 		Calendar cal = Calendar.getInstance();
 		String timeInstance = curFormater.format(cal.getTime());
 		
-		String hourInstance = misc.getHour(timeInstance);
-		String minInstance = misc.getMinute(timeInstance);
-		String dateInstance = misc.getDate(timeInstance);
-		String monthInstance = misc.getMonth(timeInstance);
-		String yearInstance = misc.getYear(timeInstance);
+		String hourInstance = misc.getHourFromString(timeInstance);
+		String minInstance = misc.getMinuteFromString(timeInstance);
+		String dateInstance = misc.getDateFromString(timeInstance);
+		String monthInstance = misc.getMonthFromString(timeInstance);
+		String yearInstance = misc.getYearFromString(timeInstance);
 		
 		if(MainActivity.conn) {
 			String cmd = "";

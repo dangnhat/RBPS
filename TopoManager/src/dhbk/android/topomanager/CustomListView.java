@@ -15,6 +15,7 @@ public class CustomListView extends TableLayout{
 	TextView valueBpView;
 	TextView valueHrView;
 	TextView timestampView;
+	TextView noticeView;
 	
 	public CustomListView(Context context) {
 		super(context);
@@ -30,6 +31,7 @@ public class CustomListView extends TableLayout{
 		this.valueBpView = (TextView)findViewById(R.id.valueBP);
 		this.valueHrView = (TextView)findViewById(R.id.valueHR);
 		this.timestampView = (TextView)findViewById(R.id.timestamp);
+		this.noticeView = (TextView)findViewById(R.id.notice);
 	}
 
 }

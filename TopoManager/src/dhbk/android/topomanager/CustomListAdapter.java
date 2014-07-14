@@ -23,6 +23,7 @@ public class CustomListAdapter extends ArrayAdapter<NodeInfo> {
 	public TextView valueBpView;
 	public TextView valueHrView;
 	public TextView timestampView;
+	public TextView noticeView;
 	
 	public CustomListAdapter(Context context, int textViewResourceId,
 			ArrayList<NodeInfo> arrayNode) {
@@ -48,45 +49,50 @@ public class CustomListAdapter extends ArrayAdapter<NodeInfo> {
 			valueBpView = ((CustomListView)nodeView).valueBpView;
 			valueHrView = ((CustomListView)nodeView).valueHrView;
 			timestampView = ((CustomListView)nodeView).timestampView;
+			noticeView = ((CustomListView)nodeView).noticeView;
 			
 			/* Display on view */
-			nIdView.setText(nodeInfo.getNodeId());
-			pIdView.setText(nodeInfo.getPatientId());
+			nIdView.setText(String.valueOf(nodeInfo.getNodeId()));
+			pIdView.setText(String.valueOf(nodeInfo.getPatientId()));
 			nameView.setText(nodeInfo.getName());
-			scheduleView.setText(nodeInfo.getIsSchedule());
+			if(nodeInfo.getIsSchedule())
+				scheduleView.setText("Scheduled");
+			else scheduleView.setText("No schedule");
 			
 			String htmlValueBP = convertValueBP2Html(nodeInfo.getSysBpValue(), nodeInfo.getDiasBpValue());
 			String htmlValueHR = convertValueHR2Html(nodeInfo.getHrValue());
 			valueBpView.setText(Html.fromHtml(htmlValueBP));
 			valueHrView.setText(Html.fromHtml(htmlValueHR));
-			timestampView.setText(setTextDateAndTimeOrNotice());
+			if(nodeInfo.getHour() < 0)
+				timestampView.setText("");
+			else
+				timestampView.setText(misc.setTextDateAndTime(nodeInfo.getHour(), nodeInfo.getMinute(), 
+											nodeInfo.getDate(), nodeInfo.getMonth(), nodeInfo.getYear()));
+			noticeView.setText(nodeInfo.getNotice());
 		}
 
 		return nodeView;
 	}
 	
-	public String convertValueBP2Html(String sysBP, String diasBP) {
-		String result = "<u><b>BP</b></u>: <font color=\"red\">"+sysBP+"</font>/"
-				+ "<font color=\"blue\">"+diasBP+"</font> (mmHg)";
+	public String convertValueBP2Html(int sysBP, int diasBP) {
+		String sysBpStr = "===";
+		String diasBpStr = "==";
+		if(sysBP >= 0)
+			sysBpStr = String.valueOf(sysBP);
+		if(diasBP >= 0)
+			diasBpStr = String.valueOf(diasBP);
+		String result = "<u><b>BP</b></u>: <font color=\"red\">"+sysBpStr+"</font>/"
+				+ "<font color=\"blue\">"+diasBpStr+"</font> (mmHg)";
 		
 		return result;
 	}
 	
-	public String convertValueHR2Html(String HR) {
-		String result = "<u><b>HR</b></u>: <font color=\"blue\">"+HR+"</font> (ppm)";
+	public String convertValueHR2Html(int HR) {
+		String hrStr = "==";
+		if(HR >= 0)
+			hrStr = String.valueOf(HR);
+		String result = "<u><b>HR</b></u>: <font color=\"blue\">"+hrStr+"</font> (ppm)";
 		
-		return result;
-	}
-	
-	public String setTextDateAndTimeOrNotice() {
-		String result = "";
-		if(nodeInfo.getBoolTimeOrOther()) {
-			String hhmm = nodeInfo.getTimeValue();
-			String ddmmyyyy = nodeInfo.getDateValue();
-			result = misc.setTextDateAndTime(hhmm+ddmmyyyy);
-		}else {
-			result = nodeInfo.getOtherNotice();
-		}
 		return result;
 	}
 

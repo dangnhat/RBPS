@@ -9,6 +9,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 
+import android.R.integer;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -38,8 +39,9 @@ public class MainActivity extends Activity {
 	public static Socket socketTemp;
 	public static PrintWriter out;
 	public static BufferedReader in;
-	public static String DATA = ""; //frame.
-	public static String chosenPatientId = "";
+	public static char[] FRAME = new char[258]; //frame.
+	public static int chosenPatientId = -1;
+	public static int chosenNodeId = -1;
 	public final int maxSizeBuffer = 258;
 	public static boolean conn = false;
 	public static boolean useIpDefault = true;
@@ -52,37 +54,34 @@ public class MainActivity extends Activity {
 	public static String SERVER_IP = "";
 	
 	/* List of commands */
-	private final String scanCmd = "1";
-	private final String measureCmd = "2";
-	private final String detailCmd = "3";
-	private final String predictCmd = "4";
-	private final String scheduleCmd = "5";
+	private final int scan = 0x0001;
+	private final int measure = 0x0004;
+	private final int detail_info = 0x0014;
+	private final int detail_bp = 0x0005;
+	private final int detail_hr = 0x0007;
+	private final int detail_height = 0x0009;
+	private final int detail_weight = 0x000B;
+	private final int detail_history = 0x000D;
+	private final int predict = 0x000F;
+	private final int get_schedule = 0x0019;
 	
-	private final char scan = 0x01;
-	private final char measure = 0x04;
-	private final char detail_info = 0x14;
-	private final char detail_bp = 0x05;
-	private final char detail_hr = 0x07;
-	private final char detail_height = 0x09;
-	private final char detail_weight = 0x0B;
-	private final char detail_history = 0x0D;
-	private final char predict = 0x0F;
-	private final char get_schedule = 0x19;
-	
+	/* Length */
 	private final char common_length = 4;
-	private final char new_schedule_length = 10;
+	private final int pidLeng = 4;
+	private final int nidLeng = 4;
+	private final int nameLeng = 20;
 	
 	/* what of massages of handler */
-	private final int report = 1;
-	private final int streamError = 2;
-	private final int wakeUp = 3;
+	private final int scanMsg = 1;
+	private final int reportMsg = 2;
+	private final int streamErrorMsg = 3;
+	private final int wakeUpMsg = 4;
+	private final int measureMsg = 5;
 	
 	/* Variables for list view */
 	private ArrayList<NodeInfo> arrayNode;
 	private CustomListAdapter arrNodeAdapter;
 	private ListView topoView;
-	private String nullSysBp = "===";
-	private String nullDiasBpHr = "==";
 	
 	/* Create monitor to manage synchronization of two threads */
 	class MonitorObject {}
@@ -92,62 +91,12 @@ public class MainActivity extends Activity {
 	private Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
-        	if(msg.what == wakeUp) {
+        	if(msg.what == wakeUpMsg) {
         		notifyToast("Waked up", Toast.LENGTH_SHORT);
-        	}else if(msg.what == streamError) {
+        	}else if(msg.what == streamErrorMsg) {
         		notifyToast("Streams error. Please connect again!", Toast.LENGTH_SHORT);
-        	}else {
-        		String result = (String) msg.obj;
-        		String cmd = parser.parse(result, "", "cmd");
-        		String data = parser.parse(result, "cmd", "");
-        		String sysData = nullSysBp;
-        		String diasData = nullDiasBpHr;
-        		String hrData = nullDiasBpHr;
-        		String timestamp = "";
-        		String schedule = "No schedule";
-
-        		String nID = parser.parse(data, "", "n");
-        		String pID = parser.parse(data, "n", "p");
-	        	String name = parser.parse(data, "p", "schedule");
-	        	String isSchedule = parser.parse(data, "schedule", "measure");
-	        	if(isSchedule.equals("1"))
-	        		schedule = "Scheduled";
-	        	if(cmd.equals(scanCmd)) {	
-		        	/* List node on list view */
-		    		NodeInfo nInfo = new NodeInfo(nID, pID, name);
-		    		nInfo.setIsSchedule(schedule);
-		    		nInfo.setBpValue(sysData, diasData);
-		    		nInfo.setHrValue(hrData);
-		    		nInfo.setDateAndTimeStampOrNotice(timestamp, false);
-		    		addNode(nInfo);
-		    		nInfo = new NodeInfo("2", "2", "Nguyen Van Hien");
-		    		nInfo.setIsSchedule("Scheduled");
-		    		nInfo.setBpValue("112", "69");
-		    		nInfo.setHrValue("70");
-		    		nInfo.setDateAndTimeStampOrNotice("133212072014", true);
-		    		addNode(nInfo);
-	        	}else if(cmd.equals(measureCmd)) {
-	        		/* Update node on view */
-	        		sysData = parser.parse(data, "measure", "sys");
-	        		diasData = parser.parse(data, "sys", "dias");
-	        		hrData = parser.parse(data, "dias", "hr");
-	        		timestamp = parser.parse(data, "hr", "");
-	        		if(arrayNode != null) {
-	        			NodeInfo chosenNode = searchNode(pID);
-	        			if(chosenNode != null) {
-	        				Log.d("node", "ok");
-	        				chosenNode.setBpValue(sysData, diasData);
-	        				chosenNode.setHrValue(hrData);
-		        			chosenNode.setDateAndTimeStampOrNotice(timestamp, true);
-	        			}
-	        			Log.d("node", "eko");
-	        		}
-	        	}else if(cmd.equals(scheduleCmd)) {
-	        		if(arrayNode != null) {
-	        			NodeInfo chosenNode = searchNode(pID);
-	        			chosenNode.setIsSchedule(schedule);
-	        		}
-	        	}
+        	}else if(msg.what == scanMsg){
+        		
 	    		
 	    		topoView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 	    			@Override
@@ -156,11 +105,15 @@ public class MainActivity extends Activity {
 	    					parent.getChildAt(i).setBackgroundResource(0);
 	    				}
 	    				chosenPatientId = arrayNode.get(position).getPatientId();
-	    				notifyToast(chosenPatientId, Toast.LENGTH_SHORT);
+	    				chosenNodeId = arrayNode.get(position).getNodeId();
+//	    				notifyToast(chosenPatientId, Toast.LENGTH_SHORT);
 	    				view.setBackgroundResource(R.drawable.gradient_bg_hover);
 	    			}
 	    		});
-	    		/* </End> update node on list view */
+        	}else if(msg.what == reportMsg) {
+        		
+        	}else if(msg.what == measureMsg) {
+        		
         	}
     	}
     }; 
@@ -173,33 +126,22 @@ public class MainActivity extends Activity {
 			while(true) {
 				if(!conn) {
 					threadWait();
-					Message msg = handler.obtainMessage(wakeUp);
+					Message msg = handler.obtainMessage(wakeUpMsg);
 		            handler.sendMessage(msg);
 				}else {
+					String backgroudCmd = "b";
+					out.println(backgroudCmd);
 					try{
-			            String line = "";
-			            String result = "";
-			            char[] ret = new char[maxSizeBuffer];
-			            while(conn) {	//do while still connect and no button is chosen.
+			            char[] ret = new char[maxSizeBuffer+1];
+			            while(conn) {	//do while still connect.
 			            	in.read(ret);
-			            	String s = "";
-		            		int[] t = new int[maxSizeBuffer];
-		            		for(int i = 0; i < maxSizeBuffer-1; i++) {
-		            			t[i] = (int)ret[i];
-		            			s += String.valueOf(t[i]);
-		            		}
-		            		s += String.valueOf(ret[257]);
-		            		Log.d("rcv", s);
-//		            		line = in.readLine().toString();
-//			            	if(line.equalsIgnoreCase("end")) {
-//					            Message msg = handler.obtainMessage(report, (Object)result);
-//					            handler.sendMessage(msg);
-//					            result = "";
-//			            	}
-//			            	result += line;
+			            	if(ret[258] == 'e') {
+			            		Message msg = handler.obtainMessage(reportMsg, (Object)ret);
+					            handler.sendMessage(msg);
+			            	}
 			            }
 			        }catch(Exception e) {
-			        	Message msg = handler.obtainMessage(streamError);
+			        	Message msg = handler.obtainMessage(streamErrorMsg);
 			            handler.sendMessage(msg);
 			            e.printStackTrace();
 			        }
@@ -240,24 +182,23 @@ public class MainActivity extends Activity {
 		arrayNode = new ArrayList<NodeInfo>();
 		arrNodeAdapter = new CustomListAdapter(MainActivity.this, R.layout.list_view, arrayNode);
 		topoView.setAdapter(arrNodeAdapter);
-//		char a = 0x0a;
-//		int i = (int)a;
-//		if(i == 0x0a)
-//			Log.d("ok", "eko");
-//		char b = 'a';
-//		String s = String.valueOf(b);
-//		Log.d("dduuf", s);
+		char[] a = new char[10];
+		a[0] = 65;
+		char[] b = new char[2];
+		b[0] = 65;
+		b[1] = 0x23;
+		parser.insData2Arr(a, b, 1);
+		Log.d("abc", String.valueOf(a[0]));
+		Log.d("abc1", String.valueOf(a[1]));
+		Log.d("abc2", String.valueOf(a[2]));
+		
 		/* Try to connecting to the server */
 		conn = tryConnect(useIpDefault, SERVER_IP_DEFAULT, SERVER_IP);
-		if(conn)
-			scanNode();
-
+		
 		/* Always run the background thread */
 		background.start();
-		Message msg = handler.obtainMessage(report, (Object)"1cmd1n1pPham Huu Dang Nhatschedule0measure");
-        handler.sendMessage(msg);
-		msg = handler.obtainMessage(report, (Object)"2cmd1n1pnvhienschedule0measure112sys69dias70hr133012072014");
-        handler.sendMessage(msg);
+		if(conn)
+			scanNode();
 	}
 	
 	@Override
@@ -411,23 +352,56 @@ public class MainActivity extends Activity {
 	}
 	
 	public void scanNode() {
-		DATA = createDataFrame(scanCmd, "");
-		try{
-			out.println(DATA);
-		}catch(Exception e){
+		if(conn) {
+			ProgressDialog progDialog = ProgressDialog.show(MainActivity.this, "Loading", "Please wait...", true);
+			char[] data = new char[4];
+			char[] scanNode = new char[maxSizeBuffer+1];
 			
-		}
+			/* Create frame without data */
+			FRAME = createDataFrame(scan, data);
+			
+			/* Send frame and get reply data */
+			scanNode = sendReceiveFrame(FRAME);
+			
+			int leng = (int)scanNode[0];
+			/* Get number of node */
+			int numOfNode = (leng-1)/8;
+			
+			/* Get detail information of all node */
+			for(int i = 0; i < numOfNode; i++) {
+				char[] scanReport = new char[20+4+4];
+				char[] pID = new char[4];
+				pID = parser.subCharArray(scanNode, 4+nidLeng+i*(nidLeng+pidLeng), pidLeng);
+				FRAME = createDataFrame(detail_info, pID);
+				/* Get nID and Pid and put them to array destination */
+				parser.insData2Arr(scanReport, parser.subCharArray(scanNode, 4+i*(nidLeng+pidLeng), nidLeng+pidLeng), 0);
+				/* Get name and put it to an array destination */
+				parser.insData2Arr(scanReport, parser.subCharArray(FRAME, 7, nameLeng), nidLeng+pidLeng);
+				Message msg = handler.obtainMessage(scanMsg, (Object)scanReport);
+	            handler.sendMessage(msg);
+			}
+			progDialog.dismiss();
+		}else
+			notifyToast("No connection. Please connect again!", Toast.LENGTH_SHORT);
+		
+		return;
 	}
 	
 	/* Handle Measure button click */
 	public void measure(View viewClick) {
 		if(conn) {
-			if(chosenPatientId.equals("")) {
+			if(chosenPatientId == -1) {
 				notifyToast("Please choose a patient!", Toast.LENGTH_SHORT);
+			}else if(chosenPatientId == 0){
+				notifyToast("No patient!", Toast.LENGTH_SHORT);
 			}else {
 				/* Create a frame */
-	            DATA = createDataFrame(measureCmd, chosenPatientId);
-				new socketWorker(DATA).execute();
+				char[] data = new char[nidLeng];
+				data = parser.int2charArray(chosenNodeId);
+	            FRAME = createDataFrame(measure, data);
+				sendReceiveFrame(FRAME);
+				Message msg = handler.obtainMessage(measureMsg, chosenNodeId, chosenPatientId);
+	            handler.sendMessage(msg);
 			}
 		}else
 			notifyToast("No connection. Please connect again!", Toast.LENGTH_SHORT);
@@ -438,28 +412,45 @@ public class MainActivity extends Activity {
 	/* Handle Detail button click */
 	public void detailNode(View viewClick) {
 		if(conn) {
-			if(chosenPatientId.equals("")) {
+			if(chosenPatientId == -1) {
 				notifyToast("Please choose a patient!", Toast.LENGTH_SHORT);
+			}else if(chosenPatientId == 0){
+				notifyToast("No patient!", Toast.LENGTH_SHORT);
 			}else {
-				/* Create a frame */
-	            DATA = createDataFrame(detailCmd, chosenPatientId);
-				new socketWorker(DATA).execute();
 				/* new intent */
 				activityIntent = new Intent(this, DetailActivity.class);
+				
+				char[] result = new char[maxSizeBuffer+1];
+				char[] data = new char[pidLeng];
+				data = parser.int2charArray(chosenPatientId);
+				/* Create frame and transfer */
+	            FRAME = createDataFrame(detail_info, data);
+	            result = sendReceiveFrame(FRAME);
+	            activityIntent.putExtra("detail_info", result);
+	            
+	            FRAME = createDataFrame(detail_bp, data);
+	            result = sendReceiveFrame(FRAME);
+	            activityIntent.putExtra("detail_bp", result);
+	            
+	            FRAME = createDataFrame(detail_hr, data);
+	            result = sendReceiveFrame(FRAME);
+	            activityIntent.putExtra("detail_hr", result);
+	            
+	            FRAME = createDataFrame(detail_height, data);
+	            result = sendReceiveFrame(FRAME);
+	            activityIntent.putExtra("detail_height", result);
+	            
+	            FRAME = createDataFrame(detail_weight, data);
+	            result = sendReceiveFrame(FRAME);
+	            activityIntent.putExtra("detail_weight", result);
+	            
+	            FRAME = createDataFrame(detail_history, data);
+	            result = sendReceiveFrame(FRAME);
+	            activityIntent.putExtra("detail_history", result);
+	            startActivity(activityIntent);
 			}
 		}else {
 			notifyToast("No connection. Please connect again!", Toast.LENGTH_SHORT);
-			String result = "1n1pPham Huu Dang Nhat"
-					+ "recently110sys66dias78hr164010072014"
-					+ "avgdate112sys69dias69hrpeakdate113sys70dias70hr124007072014130306072014173408072014"
-					+ "avgweek112sys69dias69hrpeakweek113sys70dias70hr124007072014130306072014173408072014"
-					+ "avgmonth112sys69dias69hrpeakmonth113sys70dias70hr124007072014130306072014173408072014"
-					+ "height170cm144504062013"
-					+ "weight60kg130407072014"
-					+ "history0000";
-			Intent activityIntent = new Intent(this, DetailActivity.class);
-			activityIntent.putExtras(createBundle("data", result));
-			startActivity(activityIntent);
 		}
 		
 		return;
@@ -468,24 +459,29 @@ public class MainActivity extends Activity {
 	/* Handle Predict button click */
 	public void predict(View viewClick) {
 		if(conn) {
-			if(chosenPatientId.equals("")) {
+			if(chosenPatientId == -1) {
 				notifyToast("Please choose a patient!", Toast.LENGTH_SHORT);
+			}else if(chosenPatientId == 0){
+				notifyToast("No patient!", Toast.LENGTH_SHORT);
 			}else {
-				/* Create a frame */
-	            DATA = createDataFrame(predictCmd, chosenPatientId);
-	            new socketWorker(DATA).execute();
-	            /* new intent */
+				/* new intent */
 				activityIntent = new Intent(this, PredictActivity.class);
+				String basic_info = "";
+				NodeInfo nInfo = searchNode(chosenPatientId);
+				basic_info += String.valueOf(chosenNodeId)+"n"+String.valueOf(chosenPatientId)+"p"+nInfo.getName();
+				activityIntent.putExtra("basic_info", basic_info);
+				
+				char[] result = new char[maxSizeBuffer+1];
+				char[] data = new char[pidLeng];
+				data = parser.int2charArray(chosenPatientId);
+				/* Create a frame */
+	            FRAME = createDataFrame(predict, data);
+	            result = sendReceiveFrame(FRAME);
+	            activityIntent.putExtra("predict", result);
+	            startActivity(activityIntent);
 			}
 		}else {
 			notifyToast("No connection. Please connect again!", Toast.LENGTH_SHORT);
-			String result = "1n1pPham Huu Dang Nhat"
-					+ "prehyper1"
-					+ "avgmonth137sys69dias69hr21.5"
-					+ "history0001";
-			Intent activityIntent = new Intent(this, PredictActivity.class);
-			activityIntent.putExtras(createBundle("data", result));
-			startActivity(activityIntent);
 		}
 		
 		return;		
@@ -494,36 +490,39 @@ public class MainActivity extends Activity {
 	/* Handle Schedule button click */
 	public void schedule(View viewClick) {
 		if(conn) {
-			if(chosenPatientId.equals("")) {
+			if(chosenPatientId == -1) {
 				notifyToast("Please choose a patient!", Toast.LENGTH_SHORT);
+			}else if(chosenPatientId == 0){
+				notifyToast("No patient!", Toast.LENGTH_SHORT);
 			}else {
-				/* Create a frame */
-	            DATA = createDataFrame(scheduleCmd, chosenPatientId);
-				new socketWorker(DATA).execute();
 				/* new intent */
 				activityIntent = new Intent(this, ScheduleActivity.class);
+				
+				char[] result = new char[maxSizeBuffer+1];
+				char[] data = new char[pidLeng];
+				data = parser.int2charArray(chosenPatientId);
+				/* Create a frame */
+	            FRAME = createDataFrame(get_schedule, data);
+	            result = sendReceiveFrame(FRAME);
+				activityIntent.putExtra("schedule", result);
+				startActivity(activityIntent);
 			}
 		}else {
 			notifyToast("No connection. Please connect again!", Toast.LENGTH_SHORT);
-			String result = "1schedule"
-					+ "1abs124513072014";
-			Intent activityIntent = new Intent(this, ScheduleActivity.class);
-			activityIntent.putExtras(createBundle("data", result));
-			startActivity(activityIntent);
 		}
 		
 		return;		
 	}
 		
 	/* Process transceiver when choosing buttons */
-	public class socketWorker extends AsyncTask<String, Void, String> {
+	public class socketWorker extends AsyncTask<String, Void, char[]> {
 		private int errno = 0;
     	private ProgressDialog progDialog;
     	
-    	String result = "";
-    	String data = "";	//data in a frame.
+    	char[] result;
+    	char[] data;	//data in a frame.
     	
-    	public socketWorker(String data){
+    	public socketWorker(char[] data){
     		this.data = data;
     	}
     	
@@ -533,7 +532,7 @@ public class MainActivity extends Activity {
 		}
 		
 		@Override
-		protected String doInBackground(String... params) {	
+		protected char[] doInBackground(String... params) {	
 			/* Connect to server */
 			try {
 				socketTemp = new Socket();
@@ -555,11 +554,10 @@ public class MainActivity extends Activity {
 	            out.println(this.data);
 	            
 	            /* Read topology data from server */
-	            String line = "";
 	            while(true) {
-	            	line = in.readLine().toString();
-	            	if(line.equalsIgnoreCase("end")) break;
-	            	result += line;
+	            	in.read(result);
+	            	if(result[258] == 'e') 
+	            		break;
 	            }
 	            
 	            return result;
@@ -572,7 +570,7 @@ public class MainActivity extends Activity {
 		}
 		
 		@Override
-	    protected void onPostExecute(String result) {
+	    protected void onPostExecute(char[] result) {
 			progDialog.dismiss();
 			try {
 				socketTemp.close();
@@ -585,7 +583,6 @@ public class MainActivity extends Activity {
 				notifyToast("Transfering error! Please connect again!", Toast.LENGTH_SHORT);
 			}else {
 				notifyToast("Done!", Toast.LENGTH_SHORT);
-				Log.d("result", result);
 				activityIntent.putExtras(createBundle("data", result));
 				startActivity(activityIntent);
 			}
@@ -593,11 +590,13 @@ public class MainActivity extends Activity {
 	}
 	
 	/* Create a frame */
-	public String createDataFrame(String cmd, String data) {
-		String frame = "";
-		int lengthData = data.length();
-		frame += String.valueOf(lengthData) + cmd + data;
-		
+	public char[] createDataFrame(int cmd, char[] data) {
+		char[] frame = new char[258];
+		frame[0] = common_length;
+		char[] command = parser.int2charArray(cmd);
+		frame[1] = command[0];
+		frame[2] = command[1];
+		parser.insData2Arr(frame, data, 3);
 		return frame;
 	}
 	
@@ -634,9 +633,9 @@ public class MainActivity extends Activity {
 		return;
 	}
 	
-	public Bundle createBundle(String key, String extra) {
+	public Bundle createBundle(String key, char[] extra) {
 		Bundle bundle = new Bundle();
-		bundle.putString(key, extra);
+		bundle.putCharArray(key, extra);
 		
 		return bundle;
 	}
@@ -658,14 +657,48 @@ public class MainActivity extends Activity {
 		}
 	}
 	
-	public NodeInfo searchNode(String pID) {
+	public NodeInfo searchNode(int pID) {
 		NodeInfo chosenNode = null;
 		for(int i = 0; i < arrayNode.size(); i++) {
-			if(arrayNode.get(i).getPatientId().equals(pID))
+			if(arrayNode.get(i).getPatientId() == pID)
 				chosenNode = arrayNode.get(i);
 		} 
 		
 		return chosenNode;
+	}
+	
+	public char[] sendReceiveFrame(char[] frame) {
+		char[] result = new char[maxSizeBuffer+1];
+		/* Connect to server */
+		try {
+			socketTemp = new Socket();
+			socketTemp.bind(null);
+			if(useIpDefault)
+				socketTemp.connect((new InetSocketAddress(SERVER_IP_DEFAULT, SERVER_PORT)), 10000);
+			else
+				socketTemp.connect((new InetSocketAddress(SERVER_IP, SERVER_PORT)), 10000);
+        }catch(Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+		/* Open a output stream and a input stream to send and receive data */
+        try{
+        	PrintWriter out = new PrintWriter(socketTemp.getOutputStream(), true);
+        	BufferedReader in = new BufferedReader(new InputStreamReader(socketTemp.getInputStream()));
+            /* Send frame to server */
+            out.println(frame);
+            
+            /* Read topology data from server */
+            while(true) {
+            	in.read(result);
+            	if(result[258] == 'e') 
+            		break;
+            }
+        }catch(Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+        return result;
 	}
 	
 }
