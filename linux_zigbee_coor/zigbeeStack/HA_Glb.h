@@ -9,12 +9,6 @@
 #ifndef HA_GLB_H_
 #define HA_GLB_H_
 
-#ifdef EN_CC_DEBUG
-#define CC_DEBUG(...) printf(__VA_ARGS__)
-#else
-#define CC_DEBUG(...)
-#endif
-
 /**< includes */
 #include <stddef.h>
 #include <string.h>
