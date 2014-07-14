@@ -26,17 +26,18 @@
 #endif
 
 namespace rbps_ns {
-	/* extern global variables */
+	/* broad cast id for wifi process */
+	const uint16_t wifi_boardcast_mtype = 0xFFFF;
 
 	/* Command id */
-	const uint16_t update_node_id = 0x0003; // out
-	const uint16_t update_node_rep_id = 0x0016; // in
-	const uint16_t detail_info_id = 0x0014; // out
-	const uint16_t detail_info_rep_id = 0x0015; // in
-	const uint16_t measure_node_id = 0x0004; // in
-	const uint16_t hold_measurement_id = 0x0018; // out
-	const uint16_t node_report_id = 0x0017; // out
-	const uint16_t prediction_rep_id = 0x0010; // in
+	const uint16_t update_node_id = 0x0003; // in
+	const uint16_t update_node_rep_id = 0x0016; // out
+	const uint16_t detail_info_id = 0x0014; // in
+	const uint16_t detail_info_rep_id = 0x0015; // out
+	const uint16_t measure_node_id = 0x0004; // out
+	const uint16_t hold_measurement_id = 0x0018; // in
+	const uint16_t node_report_id = 0x0017; // in
+	const uint16_t prediction_rep_id = 0x0010; // out
 
 	const uint8_t update_node_length = 8;
 	const uint8_t update_node_rep_length = 1;
@@ -45,6 +46,9 @@ namespace rbps_ns {
 	const uint8_t measure_node_length = 4;
 	const uint8_t hold_measurement_length = 5;
 	const uint8_t prediction_rep_length = 21;
+
+	const uint8_t status_false = 0;
+	const uint8_t status_true = 1;
 
 	/* shared queue between main thread (controller) and zigbee thread */
 	extern int cc2zb_mq_id;
@@ -56,10 +60,11 @@ namespace rbps_ns {
 
 	/* message mtext max size */
 	const uint16_t mtext_max_size = 3+255;
+	const uint16_t gframe_data_max_size = 255;
 	/* message type */
 	typedef struct mesg_s {
 		long mtype;
-		char mtext[mtext_max_size];
+		uint8_t mtext[mtext_max_size];
 	} mesg_t;
 }
 

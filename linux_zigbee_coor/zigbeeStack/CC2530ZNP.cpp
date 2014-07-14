@@ -9,6 +9,13 @@
 /* Includes */
 #include "CC2530ZNP.h"
 
+#define CC_DEBUG (1)
+#if CC_DEBUG
+#define CC_PRINTF(...) printf(__VA_ARGS__);
+#else
+#define CC_PRINTF(...)
+#endif
+
 using namespace CC_ns;
 
 /* Definitions of Len (1 byte, len = FF means vary) and Cmd (2 bytes) for CC2530ZNP API */
@@ -407,13 +414,13 @@ status_t CC2530ZNP::sys_reset_hard (void){
 
 	/* reset (ATTENTION: using DTR pin to reset) */
 	/* set DTR low to reset*/
-	printf("Reseting...\n");
+	CC_PRINTF("CC_RSH:Reseting...\n");
 	RS232_enableDTR(comport_num);
 	for (count = 0; count < 10000000; count++) {
 		;
 	}
 
-	printf("Release...\n");
+	CC_PRINTF("CC_RSH:Release...\n");
 	/* set DTR high to release */
 	RS232_disableDTR(comport_num);
 	for (count = 0; count < 10000000; count++) {
@@ -422,7 +429,7 @@ status_t CC2530ZNP::sys_reset_hard (void){
 
 	/* send 0x07 (force jump ZNP code) */
 	RS232_SendByte(comport_num, 0x07);
-	printf("Sended 0x07\n");
+	CC_PRINTF("CC_RSH:Sended 0x07\n");
 
     while (cmd_isNewMessage() == false) {
     	;

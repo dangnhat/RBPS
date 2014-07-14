@@ -19,6 +19,22 @@
 using namespace std;
 
 int main() {
-	wifi_process_func();
+	pthread_t zigbee_thread;
+	int ret_val;
+	rbps_ns::mesg_t a_mesg;
+	uint16_t count;
+
+	/* init system */
+	rbps_init();
+
+	/* create zigbee thread */
+	ret_val = pthread_create(&zigbee_thread, NULL, zigbee_thread_func, NULL);
+	if (ret_val != 0) {
+		RBPS_PRINTF("main_thread:Can't create thread\n");
+	}
+
+	/* start controller thread */
+	controller_thread_func(NULL);
+
 	return 0;
 }
