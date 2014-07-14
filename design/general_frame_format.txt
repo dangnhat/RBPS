@@ -120,8 +120,8 @@ mobile -> Coordinator.
 /*----------------------------------------------------------------------------*/
 * detail_blood_pressure_rep:
 /************************************************/
-/*  1 (bytes)       |       2       |   1       |   8                                   |   8               |
-/*  leghth = var    |   0x0006      |   cont    |   most_recent_BP (sys (4) | dias (4)) |   avg BP in day   |
+/*  1 (bytes)       |       2       |   1       |   8                                   | 6             |   8               |
+/*  leghth = var    |   0x0006      |   cont    |   most_recent_BP (sys (4) | dias (4)) | timestamp     |   avg BP in day   |
 
 |   4                   |   2           |   4                   |   2           |
 |   peak sys BP in day  |   timestamp   |   peak dias BP in day |   timestamp   |
@@ -132,8 +132,8 @@ avg BP in week  |   peak sys BP in weak  |   timestamp   |   peak dias BP in wea
 8                |   4                      |   6           |   4                       |   6           |
 avg BP in month  |   peak sys BP in month   |   timestamp   |   peak dias BP in month   |   timestamp   |
 
-8           |   2       |   ...     |
-BP in day   |   time    |   ...     | (tat ca trong ngay)
+//8           |   2       |   ...     |
+//BP in day   |   time    |   ...     | (tat ca trong ngay, tam thoi bo qua)
 /************************************************/
 
 Coordinator -> mobile.
@@ -150,8 +150,8 @@ mobile -> Coordinator.
 /*----------------------------------------------------------------------------*/
 * detail_heart_rate_rep:
 /************************************************/
-/*  1 (bytes)       |       2       |   1       |   4                |   4               |
-/*  leghth = var    |   0x0008      |   cont    |   most_recent_HR   |   avg HR in day   |
+/*  1 (bytes)       |       2       |   1       |   4                |  6           |   4               |
+/*  leghth = var    |   0x0008      |   cont    |   most_recent_HR   |  timestamp   |   avg HR in day   |
 
 |   4               |   2           |
 |   peak HR in day  |   timestamp   |
@@ -162,8 +162,8 @@ avg HR in week  |   peak HR in weak  |   timestamp   |
 4                |   4                  |   6           |
 avg HR in month  |   peak HR in month   |   timestamp   |
 
-4           |   2       |   ...     |
-HR in day   |   time    |   ...     | (tat ca trong ngay)
+//4           |   2       |   ...     |
+//HR in day   |   time    |   ...     | (tat ca trong ngay, tam thoi bo qua)
 /************************************************/
 
 Coordinator -> mobile.
