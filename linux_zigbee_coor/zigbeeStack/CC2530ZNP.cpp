@@ -9,7 +9,7 @@
 /* Includes */
 #include "CC2530ZNP.h"
 
-#define CC_DEBUG (1)
+#define CC_DEBUG (0)
 #if CC_DEBUG
 #define CC_PRINTF(...) printf(__VA_ARGS__);
 #else
@@ -131,16 +131,16 @@ void CC2530ZNP::pollComport(void) {
 	int32_t rev_count;
 	uint16_t count;
 
-	CC_DEBUG("In poll comport\n");
+	CC_PRINTF("In poll comport\n");
 
 	/* get data */
 	rev_count = RS232_PollComport(comport_num, buffer, 255);
 
-	CC_DEBUG("rev_count %d\n", rev_count);
+	CC_PRINTF("rev_count %d\n", rev_count);
 	for (count = 0; count < rev_count; count++) {
-		CC_DEBUG("%x ", buffer[count]);
+		CC_PRINTF("%x ", buffer[count]);
 	}
-	CC_DEBUG("\n");
+	CC_PRINTF("\n");
 	/* store to queue */
 	rx_cir_queue.add_data(buffer, rev_count);
 }
@@ -363,17 +363,17 @@ bool CC2530ZNP::cmd_isNewMessage (void){
 	data = rx_cir_queue.preview_data(false);
 	if (data != 0xFE) {
 		/* remove data from queue */
-		CC_DEBUG("data is not 0xFE, remove\n");
+		CC_PRINTF("data is not 0xFE, remove\n");
 		rx_cir_queue.get_data();
 
 		for (count = 1; count < rx_cir_queue.get_size(); count++) {
 			data = rx_cir_queue.preview_data(true);
 			if (data != 0xFE) {
-				CC_DEBUG("data is not 0xFE, remove\n");
+				CC_PRINTF("data is not 0xFE, remove\n");
 				rx_cir_queue.get_data();
 			}
 			else {
-				CC_DEBUG("data is 0xFE, get data\n");
+				CC_PRINTF("data is 0xFE, get data\n");
 				newdata = true;
 				break;
 			}
@@ -387,13 +387,13 @@ bool CC2530ZNP::cmd_isNewMessage (void){
 		/* get and check size */
 		length = rx_cir_queue.preview_data(true);
 		if (rx_cir_queue.get_size() < (length + 5)) {
-			CC_DEBUG("Data is not ready\n");
+			CC_PRINTF("Data is not ready\n");
 			return false;
 		}
 
 		/**< new message */
 		if (cmd_POLL() == successful) {
-			CC_DEBUG("Data ok\n");
+			CC_PRINTF("Data ok\n");
 			return true;
 		}
 	}

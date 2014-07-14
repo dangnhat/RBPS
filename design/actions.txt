@@ -43,6 +43,12 @@ Ben trong node thi luon phai co it nhat:
 Main thread khi muon gui 1 thong diep len Coor thi gui qua thread ZNP (co the dung mailbox) theo dung dinh dang 
 cua general_frame_format. Va nguoc lai. thread ZNP se dam nhan viec gui len Coor va nhan du lieu tu Coor gui ve.
 
+/*----------------------------------------------------------------------------*/
+NOTE: 14/7
+@Tiến: khi mới đầu nhập patient_id = 0 là mi báo incorrect liền nhé ko gửi update lên cho t. Patient_id bắt đầu từ 1 và số 0 nghĩa là ko có ai cả.
+Mới đầu khởi động hệ thống lên thì mi gửi update_node với patient_id = 0 lên. (chỉ gửi báo không đợi phản hồi.)
+Khi người dùng nhập patient_id thì check trước là nó phải khác 0. Rồi gửi lên và chờ nhận phản hồi.
+Khi người dùng nhấn exit, thì gửi patient_id bằng 0 (để quay lại trạng thái ko có ai) lên và cũng ko đợi phải hồi.
 
             
 

@@ -134,9 +134,7 @@ void* zigbee_thread_func(void *pdata) {
 				ZIGBEE_PRINTF("zigbee_thread:Can't send message to zb2cc_mq(%d)\n", zb2cc_mq_id);
 			}
 
-			/* continue */
-			continue;
-		}/* end if */
+		}/* end if data from zigbee */
 
 		/* check received data from cc */
 		ret_val = msgrcv(cc2zb_mq_id, &a_mesg, mtext_max_size, 0, IPC_NOWAIT);
@@ -162,9 +160,7 @@ void* zigbee_thread_func(void *pdata) {
 					break;
 				}// end if
 			}/* end while (1) */
-
-			continue;
-		}
+		}/* end if data from cc */
 
 	}/* end while (1) */
 

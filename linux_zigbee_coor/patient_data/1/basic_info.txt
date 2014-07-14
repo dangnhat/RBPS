@@ -1,0 +1,8 @@
+Name: Pham Huu Dang Nhat
+Date of birth: 7/12/1992
+--- Medical data ---
+Height: 165 cm
+Diabetes: no
+Dyslipidemia: no
+Atherosclerosis: no
+Gout: no

@@ -13,6 +13,8 @@
 #ifndef CONTROLLER_THREAD_H_
 #define CONTROLLER_THREAD_H_
 
+#include <cstdint>
+
 /* Debug definition */
 #define CTRL_DEBUG (1)
 
@@ -40,10 +42,9 @@ namespace ctrl_ns {
 		node_t nodes_list[max_num_nodes];
 	} cc_info_t;
 
-	cc_info_t cc_info;
-
-	const char patient_data_path[] = "../patient_data/";
-	const char patient_id_list_path[] = patient_data_path + "patient's_id_list.txt";
+	const char patient_data_path[] = "../patient_data";
+	const char patient_id_list_path[] = "../patient_data/patients_id_list.txt";
+	const char basic_info_name[] = "basic_info.txt";
 };
 
 /**
