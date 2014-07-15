@@ -13,7 +13,7 @@ Commands:
 * scan_nodes:
 /************************************************/
 /*  1 (bytes)   |       2       |     0         */
-/*  leghth = 4  |   0x0001      |   nothing     */
+/*  leghth = 0  |   0x0001      |   nothing     */
 /************************************************/
 
 /*----------------------------------------------------------------------------*/
@@ -127,7 +127,7 @@ mobile -> Coordinator.
 |   peak sys BP in day  |   timestamp   |   peak dias BP in day |   timestamp   |
 
 8               |   4                    |   6           |   4                      |   6           |
-avg BP in week  |   peak sys BP in weak  |   timestamp   |   peak dias BP in weak   |   timestamp   |
+avg BP in week  |   peak sys BP in weak  |   timestamp   |   peak dias BP in week   |   timestamp   |
 
 8                |   4                      |   6           |   4                       |   6           |
 avg BP in month  |   peak sys BP in month   |   timestamp   |   peak dias BP in month   |   timestamp   |
@@ -193,7 +193,7 @@ Coordinator -> mobile.
 * detail_weight_rep:
 /********************************************************************************/
 /*  1 (bytes)           |       2       |   1                           |   4       |   ...    */
-/*  leghth = 5-15       |   0x000C      |   most_recent_weight_1(kg)    |   date    |   ...    */
+/*  leghth = 15         |   0x000C      |   most_recent_weight_1(kg)    |   date    |   ...    */
 /********************************************************************************/
 
 /*----------------------------------------------------------------------------*/
@@ -230,7 +230,7 @@ mobile -> Coordinator
 /************************************************/
 
 /*----------------------------------------------------------------------------*/
-* new_schedule_to_coor:
+* new_schedule_to_coor: // ko can
 /****************************************************************************************************************************/
 /*  1 (bytes)   |       2       |   4       |   1           |   2           |   4       |   1               |   2           */
 /*  leghth = 14 |   0x0011      |   node_id |   time_abs_on |   time_abs    |   date    |   time_in_day_on  |   time_in_day */
