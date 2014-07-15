@@ -23,6 +23,9 @@ namespace ctrl_ns {
 		bool abs_on = false;
 		uint8_t abs_hour;
 		uint8_t abs_min;
+		uint8_t abs_day;
+		uint8_t abs_month;
+		uint16_t abs_year;
 
 		bool in_day_on = false;
 		uint8_t in_day_hour;
@@ -45,6 +48,25 @@ namespace ctrl_ns {
 	const char patient_data_path[] = "../patient_data";
 	const char patient_id_list_path[] = "../patient_data/patients_id_list.txt";
 	const char basic_info_name[] = "basic_info.txt";
+	const char daily_patient_data[] = "../patient_data/%u/%hu-%hu-%u.txt";
+
+	const char patient_data_block[] =
+			"Time: %c:%c\n"
+			"Blood pressure: %hu/%hu (mmHg)\n"
+			"Heart rate: %hu (pulses/min)\n"
+			"Weight: %c (kg)\n"
+			"Height: %c (cm)\n";
+
+	const char basic_info_block[] =
+			"Name: %s\n"
+			"Date of birth: %hu/%hu/%hu"
+			"--- Medical history ---\n"
+			"Diabetes: %s\n"
+			"Dyslipidemia: %s\n"
+			"Atherosclerosis: %s\n"
+			"Gout: %s\n";
+
+	const uint8_t no_data = 0;
 };
 
 /**
