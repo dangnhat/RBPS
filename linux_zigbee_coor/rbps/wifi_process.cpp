@@ -37,25 +37,26 @@ int child2parent_mq_id = -1;
 
 short numOfConn = 0;
 int sock;   //a new sock be created when has a connection.
-
-int backgroundProc[1024];
-int tempProc[1024];
+long backgroundProc[128];
+bool isBackgroundProc = false;
 
 /* Define functions */
-void work(int sock, int pid);
+void work(int sock);
 void sigfunc(int sock);
-void init_msg_queue(void);
-int search_pid(int pid);
+void create_local_msg_queue(void);
+int search_pid(long pid);
 
 void wifi_process_func() {
-    int sockln; //server create sock to listening to client.
+	/* Create msg_queues */
+	create_local_msg_queue();
 
-    int n, leng, pid;
+	int n, leng;
+	long pid;
+    int sockln; //server create sock to listening to client.
     struct sockaddr_in server_addr, client_addr; //structs contains info about address of server or client.
 
-    /* Initialize value for memories */
-    memset(&backgroundProc, 0, sizeof(backgroundProc));
-    memset(&tempProc, 0, sizeof(tempProc));
+    /* Initialize value for variables */
+    bzero(backgroundProc, sizeof(backgroundProc));
     memset(&server_addr, 0, sizeof(server_addr));
     memset(&client_addr, 0, sizeof(client_addr));
 
@@ -71,19 +72,21 @@ void wifi_process_func() {
     }
     fcntl(sockln, F_SETFL, O_NONBLOCK);
 
-    /* Binding sock */
+    /* Binding sockln */
     int b = bind(sockln, (struct sockaddr *) &server_addr, sizeof(struct sockaddr_in));
     if(b < 0) {
     	printf("ERROR on binding");
     }
 
-    /* Listening */
+    /* Listening on sockln */
     listen(sockln, 5); //maximum 5 backlog in queue.
     printf("listening...\n");
 
     leng = sizeof(client_addr);
 
-    /* always listen client */
+    mesg_t msg_s;
+	int ret;
+    /* Always listen to connection from clients */
     while (1) {
         sock = accept(sockln, (struct sockaddr*) &client_addr, (socklen_t*) &leng);
         if (sock >= 0) {
@@ -94,23 +97,45 @@ void wifi_process_func() {
 				printf("Have %d connections!\n", numOfConn);
 
             pid = fork();
-            printf("pid: %d\n", pid);
+            printf("pid: %ld\n", pid);
 
             if (pid < 0)
             	printf("ERROR on fork");
 
             if (pid == 0) {
                 close(sockln);
-                work(sock, pid);
+                work(sock);
                 signal(SIGCHLD, sigfunc);
                 exit(0);
             }else {
                 close(sock);
             }
         }else {
-        	char sendBuff[128];
-        	fgets(sendBuff, sizeof(sendBuff), stdin);
-        	printf("key: %s", sendBuff);
+        	/* Update number of connection */
+        	ret = msgrcv(child2parent_mq_id, &msg_s, 1, 0, IPC_NOWAIT);
+			if(ret > 0) {
+				printf("update connection\n");
+				if(msg_s.mtext[0] > 0) {
+					backgroundProc[search_pid(0)] = msg_s.mtext[0];
+				}else {
+					int pos = search_pid(msg_s.mtext[0]);
+					if(pos > 0)
+						backgroundProc[pos] = 0;
+					else printf("No pid in array\n");
+				}
+			}
+
+			/* Get update data from node */
+        	ret = msgrcv(cc2wi_mq_id, &msg_s, mtext_max_size, wifi_boardcast_mtype, IPC_NOWAIT);
+        	if(ret > 0) {
+        		int i;
+        		for(i = 0; i < sizeof(backgroundProc); i++) {
+        			if(backgroundProc[i] > 0) {
+        				msg_s.mtype = backgroundProc[i];
+        				msgsnd(parent2child_mq_id, &msg_s, mtext_max_size, 0);
+        			}
+        		}
+        	}
         }
     } /* end of while */
 
@@ -122,75 +147,97 @@ void wifi_process_func() {
  for each connection. It handles all communication
  once a connnection has been established.
  **************************************************/
-void work(int sock, int pid) {
-	mesg_t msg_type;
-    int i, n, length, cmd;
-
+void work(int sock) {
+	mesg_t msg_s;
+    int n, cmd, ret;
+    long pid;
     char recvBuff[mtext_max_size]; //receiving buffer.
     char sendBuff[mtext_max_size+1];
-    char endService[10];
-    strcpy(endService, "end\n");
 
     bzero(recvBuff, sizeof(recvBuff));
     bzero(sendBuff, sizeof(sendBuff));
 
+    pid = getpid();
+
     while(1) {
-        printf("child process...\n");
+        /* Receiving data from client */
         n = read(sock, recvBuff, sizeof(recvBuff));
+        if(n > 0) {
+			printf("Receiving buffer data: %s\n", recvBuff);
 
-        printf("h: %s\n", recvBuff);
+			if(recvBuff[0] == 'b') {	//background process (keeping up connection with Android device).
+				printf("==================================================\n");
+				printf("background process...\n");
+				isBackgroundProc = true;
 
-        if(recvBuff[258] == 'b') {
-        	printf("background process...\n");
-        }else {
-        	cmd = recvBuff[1]|(recvBuff[2]<<8);
-			switch(cmd) {
-			case '1':
-				/* Save PID in array */
-				backgroundProc[search_pid(0)] = pid;
-				msg_type.mtext = recvBuff;
-				if(send(sock, sendBuff, strlen(sendBuff), 0) < 0) {
-					printf("ERROR sending to socket");
+				int msg_leng = 1;
+				msg_s.mtype = pid;
+				msg_s.mtext[0] = 1;
+				/* Send pid to parent via msg_queue */
+				while(1) {
+					ret = msgsnd(child2parent_mq_id, &msg_s, msg_leng, 0);
+					if(ret != -1) {
+						printf("Sent msg to queue\n");
+						break;
+					}
+					printf("ERROR on sending msg\n");
 				}
-				printf("cmd: scan\n");
-				break;
-			case '2':
-				if(send(sock, sendBuff, strlen(sendBuff), 0) < 0) {
-					printf("ERROR sending to socket");
+				/* Get data from msg_queue */
+				while(1) {
+					ret = msgrcv(parent2child_mq_id, &msg_s, mtext_max_size, pid, 0);
+					if(ret != -1) {
+						printf("Received msg from queue\n");
+						memcpy(&sendBuff, &msg_s.mtext, mtext_max_size);
+						sendBuff[mtext_max_size] = 'e';
+						if(send(sock, sendBuff, strlen(sendBuff), 0) < 0) {
+							printf("ERROR sending to socket");
+							return;
+						}
+					}
+					printf("ERROR on receiving msg\n");
 				}
-				printf("cmd: measure\n");
-				break;
-			case '3':
+			}else {	//temporary process when an Anroid device sends request.
+				printf("==================================================\n");
+				printf("temporary process...\n");
 
-				if(send(sock, sendBuff, strlen(sendBuff), 0) < 0) {
-					printf("ERROR sending to socket");
+				cmd = recvBuff[1]|(recvBuff[2]<<8);
+				/* Forwarding msg to msg_queue */
+				while(1) {
+					msg_s.mtype = pid;
+					memcpy(&msg_s.mtext, &recvBuff, mtext_max_size);
+					ret = msgsnd(wi2cc_mq_id, &msg_s, mtext_max_size, 0);
+					if(ret != -1) {
+						printf("Sent the forwarding msg to queue\n");
+						break;
+					}else printf("ERROR on sending the forwarding msg\n");
 				}
-				printf("cmd: detail\n");
-				break;
-			case '4':
 
-				if(send(sock, sendBuff, strlen(sendBuff), 0) < 0) {
-					printf("ERROR sending to socket");
+				switch(cmd) {
+				case measure_node_id:
+				case new_schedule_id:
+					printf("no waiting\n");
+					return;
+					break;
+				default:
+					printf("waiting\n");
+					ret = msgrcv(cc2wi_mq_id, &msg_s, mtext_max_size, pid, 0);
+					if(ret != -1) {
+						printf("Received msg from queue\n");
+					}else printf("ERROR on receiving the forwarding msg\n");
+					memcpy(&sendBuff, &msg_s.mtext, mtext_max_size);
+					sendBuff[mtext_max_size] = 'e';
+					if(send(sock, sendBuff, strlen(sendBuff), 0) < 0) {
+						printf("ERROR sending to socket");
+						return;
+					}
+					break;
 				}
-				printf("cmd: predict\n");
-				break;
-			case '5':
-
-				if(send(sock, sendBuff, strlen(sendBuff), 0) < 0) {
-					printf("ERROR sending to socket");
-				}
-				printf("cmd: schedule\n");
-				break;
-			default:
-				printf("no cmd\n");
-				break;
 			}
         }
-        printf("end\n");
     }
 }
 
-void init_msg_queue(void) {
+void create_local_msg_queue(void) {
 	parent2child_mq_id = msgget(IPC_PRIVATE, S_IRUSR | S_IWUSR);
 	if (parent2child_mq_id == -1) {
 		printf("can't create parent2child_mq_id\n");
@@ -205,12 +252,21 @@ void init_msg_queue(void) {
 }
 
 void sigfunc(int sock) {
+	long pid = getpid();
+	if(isBackgroundProc) {
+		mesg_t msg_s;
+		int msg_leng = 1;
+		msg_s.mtype = pid;
+		msg_s.mtext[0] = 0;
+		msgsnd(child2parent_mq_id, &msg_s, msg_leng, 0);
+	}
     numOfConn--;
-    printf("Terminate a connection!\n");
+    printf("Terminate the process %ld!\n", pid);
+    printf("==================================================\n");
     close(sock);
 }
 
-int search_pid(int pid) {
+int search_pid(long pid) {
 	int i;
 	for(i = 0; i < sizeof(backgroundProc); i++) {
 		if(backgroundProc[i] == pid)
@@ -218,8 +274,3 @@ int search_pid(int pid) {
 	}
 	return -1;
 }
-
-int sendToMsgQueue(int msqid, rbps_ns::mesg_t* msgType) {
-	return msgsnd(msqid, msgType, rbps_ns::mtext_max_size, IPC_NOWAIT);
-}
-
