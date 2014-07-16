@@ -181,6 +181,9 @@ namespace rbps_ns {
 
 		float avg_weight;
 	} detail_weight_t;
+
+	/* current path */
+	extern char cur_path[1024];
 }
 
 /**

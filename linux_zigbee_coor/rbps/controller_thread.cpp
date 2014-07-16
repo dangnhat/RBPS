@@ -24,6 +24,12 @@
 #define CTRL_PRINTF(...)
 #endif
 
+namespace ctrl_ns {
+	char patient_data_path[1024];
+	char patient_id_list_path[1024];
+	char daily_patient_data[1024];
+}
+
 using namespace ctrl_ns;
 
 /* CC INFO struct */
@@ -258,6 +264,19 @@ void* controller_thread_func(void *pdata) {
 	node_t *node_p;
 	uint8_t data_buffer[rbps_ns::mtext_max_size - 3];
 
+	/* set data paths */
+	strcpy(patient_data_path, rbps_ns::cur_path);
+	strcat(patient_data_path, patient_data_path_c);
+	printf("ctrl: patient_data_path: %s\n", patient_data_path);
+
+	strcpy(patient_id_list_path, rbps_ns::cur_path);
+	strcat(patient_id_list_path, patient_id_list_path_c);
+	printf("ctrl: patient_id_list_path: %s\n", patient_id_list_path);
+
+	strcpy(daily_patient_data, rbps_ns::cur_path);
+	strcat(daily_patient_data, daily_patient_data_c);
+	printf("ctrl: daily_patient_data: %s\n", daily_patient_data);
+
 	while (1) {
 		/* check data from zigbee thread */
 		ret_val = msgrcv(rbps_ns::zb2cc_mq_id, &mesg, rbps_ns::mtext_max_size, 0, IPC_NOWAIT);
@@ -442,22 +461,22 @@ static void update_node_func(cc_info_t &cc_info, rbps_ns::mesg_t &mesg) {
 	CTRL_PRINTF("ctrl: unf: found patient_id %d\n", patient_id);
 
 	/* send correct update_node_rep to zigbee thread */
-	ret_data_buffer[0] = rbps_ns::status_false;
+	ret_data_buffer[0] = rbps_ns::status_true;
 	forward_gframe(rbps_ns::cc2zb_mq_id, mesg.mtype, rbps_ns::update_node_rep_length,
 			rbps_ns::update_node_rep_id, ret_data_buffer);
-	CTRL_PRINTF("ctrl: unf: sent incorrect update_node_rep to zigbee (dest addr %x)",
+	CTRL_PRINTF("ctrl: unf: sent correct update_node_rep to zigbee (dest addr %x)\n",
 			(uint16_t)mesg.mtype);
 
 	/* update node data */
 	node_p = find_node(cc_info, node_id);
 
 	if (node_p != NULL) {
-		CTRL_PRINTF("ctrl: unf: node_id %d exists, update new patient_id %d\n",
+		CTRL_PRINTF("ctrl: unf: node_id %x exists, update new patient_id %d\n",
 				node_id, patient_id);
 		node_p->patient_id = patient_id;
 	}
 	else {
-		CTRL_PRINTF("ctrl: unf: node_id %d doesn't exists, insert new node with pa_id %d\n",
+		CTRL_PRINTF("ctrl: unf: node_id %x doesn't exists, insert new node with pa_id %d\n",
 				node_id, patient_id);
 		if (cc_info.num_nodes >= max_num_nodes) {
 			CTRL_PRINTF("ctrl: unf: max_num_nodes %d is reached\n", max_num_nodes);

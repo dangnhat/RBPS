@@ -45,10 +45,14 @@ namespace ctrl_ns {
 		node_t nodes_list[max_num_nodes];
 	} cc_info_t;
 
-	const char patient_data_path[] = "../patient_data";
-	const char patient_id_list_path[] = "../patient_data/patients_id_list.txt";
+	extern char patient_data_path[1024];
+	extern char patient_id_list_path[1024];
+	extern char daily_patient_data[1024];
 	const char basic_info_name[] = "basic_info.txt";
-	const char daily_patient_data[] = "../patient_data/%u/%hu-%hu-%u.txt";
+
+	const char patient_data_path_c[] = "/patient_data";
+	const char patient_id_list_path_c[] = "/patient_data/patients_id_list.txt";
+	const char daily_patient_data_c[] = "/patient_data/%u/%hu-%hu-%u.txt";
 
 	const char patient_data_block[] =
 			"Time: %c:%c\n"

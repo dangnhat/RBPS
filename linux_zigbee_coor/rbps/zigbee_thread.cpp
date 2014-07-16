@@ -155,7 +155,7 @@ void* zigbee_thread_func(void *pdata) {
 				HA_ZbStack.Zb_callback_get(zigbee_callback);
 				if (zigbee_callback == ZbStack_ns::Zb_sendDataConfirm) {
 					HA_ZbStack.Zb_sendDataConfirm_get(ret_handle, ret_status);
-					ZIGBEE_PRINTF("zigbee_thread:Received send data confirm, handle %d, status %x",
+					ZIGBEE_PRINTF("zigbee_thread:Received send data confirm, handle %d, status %x\n",
 							ret_handle, ret_status);
 					break;
 				}// end if

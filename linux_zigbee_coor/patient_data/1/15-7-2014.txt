@@ -1,0 +1,17 @@
+Time: 8:23
+Blood pressure: 125/85 (mmHg)
+Heart rate: 64 (pulses/min)
+Weight: 60 (kg)
+Height: 0 (cm)
+
+Time: 11:06
+Blood pressure: 133/78 (mmHg)
+Heart rate: 62 (pulses/min)
+Weight: 60 (kg)
+Height: 0 (cm)
+
+Time: 16:09
+Blood pressure: 113/65 (mmHg)
+Heart rate: 59 (pulses/min)
+Weight: 0 (kg)
+Height: 0 (cm)
