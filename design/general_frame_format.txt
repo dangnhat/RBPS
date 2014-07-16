@@ -51,8 +51,8 @@ Coor se khong gui update_node_rep ve.
 Coordinator -> node: khi nhan duoc update_node tu node thi Coordinator se kiem tra
 va gui lai update_node_rep cho node do.
 
-status = OK
-status = patient_id doesn't exist.
+status = 1, OK
+status = 0, patient_id doesn't exist.
 
 /*----------------------------------------------------------------------------*/
 * detail_info:
