@@ -55,11 +55,12 @@ namespace ctrl_ns {
 	const char daily_patient_data_c[] = "/patient_data/%u/%hu-%hu-%u.txt";
 
 	const char patient_data_block[] =
-			"Time: %c:%c\n"
+			"\n"
+			"Time: %hu:%hu\n"
 			"Blood pressure: %hu/%hu (mmHg)\n"
 			"Heart rate: %hu (pulses/min)\n"
-			"Weight: %c (kg)\n"
-			"Height: %c (cm)\n";
+			"Weight: %hu (kg)\n"
+			"Height: %hu  (cm)\n";
 
 	const char basic_info_block[] =
 			"name: %s\n"

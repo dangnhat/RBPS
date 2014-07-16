@@ -154,7 +154,7 @@ static uint16_t buffer_to_uint16(uint8_t *buffer); // LSByte first
 static uint32_t buffer_to_uint32(uint8_t *buffer); // LSByte first
 static void uint16_to_buffer(uint16_t data, uint8_t* buffer); // LSByte fisrt
 static void uint32_to_buffer(uint32_t data, uint8_t* buffer); // LSByte fisrt
-static float buffer_to_foat(uint8_t *buffer); // dec-2byte, frac-2byte (2 digits)
+static float buffer_to_float(uint8_t *buffer); // dec-2byte, frac-2byte (2 digits)
 static void float_to_buffer(float data, uint8_t *buffer); // dec-2byte, frac-2byte (2 digits)
 static void timestamp_to_buffer(rbps_ns::timestamp_t timestamp, uint8_t *buffer);
 static inline bool is_leap_year(uint16_t year) {
@@ -386,7 +386,7 @@ void* controller_thread_func(void *pdata) {
 
 			CTRL_PRINTF("ctrl: curtime: %dh%d, %d/%d/%d\n",
 					cur_time_s.tm_hour, cur_time_s.tm_min,
-					cur_time_s.tm_mday, cur_time_s.tm_mon+1, cur_time_s.tm_year);
+					cur_time_s.tm_mday, cur_time_s.tm_mon+1, cur_time_s.tm_year + 1900);
 			for (uint16_t count = 0; count < cc_info.num_nodes; count++) {
 				node_p = &cc_info.nodes_list[count];
 				if (node_p->sched.abs_on) {
@@ -394,7 +394,7 @@ void* controller_thread_func(void *pdata) {
 							(node_p->sched.abs_min == cur_time_s.tm_min) &&
 							(node_p->sched.abs_day == cur_time_s.tm_mday) &&
 							(node_p->sched.abs_month == cur_time_s.tm_mon+1) &&
-							(node_p->sched.abs_year == cur_time_s.tm_year)) {
+							(node_p->sched.abs_year == cur_time_s.tm_year+1900)) {
 						/* forward measure node command to node id */
 						uint32_to_buffer(node_p->node_id, data_buffer);
 						forward_gframe(rbps_ns::cc2zb_mq_id, (uint16_t)node_p->node_id,
@@ -944,11 +944,11 @@ static void get_detail_blood_pressure(uint32_t patient_id, rbps_ns::detail_bp_t 
 	char filename[256];
 
 	/* patient data block */
-	uint8_t hour, min;
+	uint16_t hour, min;
 	uint16_t sys, dias;
 	uint16_t heartrate;
-	uint8_t weight;
-	uint8_t height;
+	uint16_t weight;
+	uint16_t height;
 
 	/* continue finding flags */
 	bool cont_recent_flag = true;
@@ -1053,6 +1053,7 @@ static void get_detail_blood_pressure(uint32_t patient_id, rbps_ns::detail_bp_t 
 					/* for avg and peak month */
 					detail_bp.avg_sys_month += (float)sys; // sum
 					detail_bp.avg_dias_month += (float)dias; // sum
+					avg_month_count++;
 
 					if (((float)sys) > detail_bp.peak_sys_month) {
 						detail_bp.peak_sys_month = (float)sys;
@@ -1075,10 +1076,9 @@ static void get_detail_blood_pressure(uint32_t patient_id, rbps_ns::detail_bp_t 
 
 			}// end file
 
+			/* close file */
+			fclose(fp);
 		}
-
-		/* close file */
-		fclose(fp);
 
 		/* set flags */
 		cont_day_flag = false;
@@ -1124,11 +1124,11 @@ static void get_detail_heart_rate(uint32_t patient_id, rbps_ns::detail_hr_t &det
 	char filename[256];
 
 	/* patient data block */
-	uint8_t hour, min;
+	uint16_t hour, min;
 	uint16_t sys_dummy, dias_dummy;
 	uint16_t heartrate;
-	uint8_t weight;
-	uint8_t height;
+	uint16_t weight;
+	uint16_t height;
 
 	/* continue finding flags */
 	bool cont_recent_flag = true;
@@ -1216,6 +1216,7 @@ static void get_detail_heart_rate(uint32_t patient_id, rbps_ns::detail_hr_t &det
 
 					/* for avg and peak month */
 					detail_hr.avg_hr_month += (float)heartrate; // sum
+					avg_month_count++;
 
 					if (((float)heartrate) > detail_hr.peak_hr_month) {
 						detail_hr.peak_hr_month = (float)heartrate;
@@ -1230,10 +1231,10 @@ static void get_detail_heart_rate(uint32_t patient_id, rbps_ns::detail_hr_t &det
 
 			}// end file
 
-		}
+			/* close file */
+			fclose(fp);
 
-		/* close file */
-		fclose(fp);
+		}
 
 		/* set flags */
 		cont_day_flag = false;
@@ -1278,11 +1279,11 @@ static void get_detail_height(uint32_t patient_id, rbps_ns::detail_height_t deta
 	bool cont_flag = true;
 
 	/* patient data block */
-	uint8_t hour, min;
+	uint16_t hour, min;
 	uint16_t sys_dummy, dias_dummy;
 	uint16_t heartrate;
-	uint8_t weight;
-	uint8_t height;
+	uint16_t weight;
+	uint16_t height;
 
 	/* get current time */
 	time(&cur_time);
@@ -1333,10 +1334,11 @@ static void get_detail_height(uint32_t patient_id, rbps_ns::detail_height_t deta
 
 			}// end file
 
+			/* close file */
+			fclose(fp);
 		}
 
-		/* close file */
-		fclose(fp);
+
 
 		/* check flags */
 		if (cont_flag == false) {
@@ -1363,11 +1365,11 @@ static void get_detail_weight(uint32_t patient_id, rbps_ns::detail_weight_t &det
 	uint8_t wcount;
 
 	/* patient data block */
-	uint8_t hour, min;
+	uint16_t hour, min;
 	uint16_t sys_dummy, dias_dummy;
 	uint16_t heartrate;
-	uint8_t weight;
-	uint8_t height;
+	uint16_t weight;
+	uint16_t height;
 
 	/* get current time */
 	time(&cur_time);
@@ -1420,10 +1422,10 @@ static void get_detail_weight(uint32_t patient_id, rbps_ns::detail_weight_t &det
 
 			}// end file
 
+			/* close file */
+			fclose(fp);
 		}
 
-		/* close file */
-		fclose(fp);
 
 		/* check flags */
 		if (wcount == 3) {
@@ -1922,7 +1924,13 @@ static void update_schedule_wifi_func(cc_info_t &cc_info, rbps_ns::mesg_t mesg) 
 	node_p->sched.in_day_min = *rec_data_p;
 	rec_data_p++;
 
-	CTRL_PRINTF("ctrl: upswifi: updated node %x sched\n", (uint16_t)node_id);
+	CTRL_PRINTF("ctrl: upswifi: updated node %x sched\n"
+			"abs(%d), %hu:%hu %hu-%hu-%hu\n"
+			"inday(%d), %hu:%hu\n",
+			(uint16_t)node_id,
+			node_p->sched.abs_on, node_p->sched.abs_hour, node_p->sched.abs_min,
+			node_p->sched.abs_day, node_p->sched.abs_month, node_p->sched.abs_year,
+			node_p->sched.in_day_on, node_p->sched.in_day_hour, node_p->sched.in_day_min);
 
 	/* reforward to all wifi processes */
 	uint32_to_buffer(node_id, data_p);
