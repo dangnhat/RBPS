@@ -71,6 +71,14 @@ static void node_report_node_func(cc_info_t &cc_info, rbps_ns::mesg_t &mesg);
 static void scan_node_wifi_func(cc_info_t &cc_info, rbps_ns::mesg_t &mesg);
 
 /**
+ * @brief   Send patient info to wifi process.
+ *
+ * @param[out]	cc_info,
+ * @param[in]	mesg, message from queue.
+ */
+static void detail_info_wifi_func(cc_info_t &cc_info, rbps_ns::mesg_t &mesg);
+
+/**
  * @brief   Send measure command to node.
  *
  * @param[out]	cc_info,
@@ -320,6 +328,10 @@ void* controller_thread_func(void *pdata) {
 			case rbps_ns::scan_node:
 				CTRL_PRINTF("ctrl: scan_node\n");
 				scan_node_wifi_func(cc_info, mesg);
+				break;
+			case rbps_ns::detail_info_id:
+				CTRL_PRINTF("ctrl: detail_info\n");
+				detail_info_wifi_func(cc_info, mesg);
 				break;
 			case rbps_ns::measure_node_id:
 				CTRL_PRINTF("ctrl: measure_node\n");
@@ -1520,6 +1532,38 @@ static void scan_node_wifi_func(cc_info_t &cc_info, rbps_ns::mesg_t &mesg) {
 						data_buffer);
 	CTRL_PRINTF("ctrl: scn: forwarded scan_node_rep to wifi process with cont %d\n",
 						data_buffer[0]);
+}
+
+/*----------------------------------------------------------------------------*/
+static void detail_info_wifi_func(cc_info_t &cc_info, rbps_ns::mesg_t &mesg) {
+	uint32_t patient_id;
+	char name[128] = "No data";
+	uint16_t date_of_birth[3] = {0, 0, 0};
+	uint8_t data_buffer[rbps_ns::gframe_data_max_size];
+
+	bool dummy1, dummy2, dummy3, dummy4;
+
+	/* extract patient_id */
+	patient_id = buffer_to_uint32(&mesg.mtext[3]);
+
+	/* do nothing if patient_id = 0 */
+	if (patient_id == 0) {
+		CTRL_PRINTF("ctrl: dinwifi: patient_id %d, return\n", patient_id);
+		return;
+	}
+
+	/* get name and date of birth */
+	get_basic_info(patient_id, name, date_of_birth, dummy1, dummy2, dummy3, dummy4);
+
+	/* send data to node */
+	data_buffer[0] = (uint8_t)date_of_birth[0];
+	data_buffer[1] = (uint8_t)date_of_birth[1];
+	data_buffer[2] = (uint8_t)date_of_birth[2];
+	data_buffer[3] = (uint8_t)(date_of_birth[2] >> 8);
+	memcpy(&data_buffer[4], name, 20);
+	forward_gframe(rbps_ns::cc2wi_mq_id, mesg.mtype, rbps_ns::detail_info_rep_length,
+			rbps_ns::detail_info_rep_id, data_buffer);
+	CTRL_PRINTF("ctrl: dinwifi: sent detail_info_rep to wifi process\n");
 }
 
 /*----------------------------------------------------------------------------*/
