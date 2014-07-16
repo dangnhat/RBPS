@@ -28,14 +28,22 @@ int main() {
 	/* init system */
 	rbps_init();
 
-	/* create zigbee thread */
-	ret_val = pthread_create(&zigbee_thread, NULL, zigbee_thread_func, NULL);
-	if (ret_val != 0) {
-		RBPS_PRINTF("main_thread:Can't create thread\n");
-	}
+	/* fork wifi process */
+	ret_val = fork();
 
-	/* start controller thread */
-	controller_thread_func(NULL);
+	if (ret_val == 0) {
+		wifi_process_func();
+	}
+	else {
+		/* create zigbee thread */
+		ret_val = pthread_create(&zigbee_thread, NULL, zigbee_thread_func, NULL);
+		if (ret_val != 0) {
+			RBPS_PRINTF("main_thread:Can't create thread\n");
+		}
+
+		/* start controller thread */
+		controller_thread_func(NULL);
+	}
 
 	return 0;
 }
