@@ -62,13 +62,12 @@ namespace ctrl_ns {
 			"Height: %c (cm)\n";
 
 	const char basic_info_block[] =
-			"Name: %s\n"
-			"Date of birth: %hu/%hu/%hu"
-			"--- Medical history ---\n"
-			"Diabetes: %s\n"
-			"Dyslipidemia: %s\n"
-			"Atherosclerosis: %s\n"
-			"Gout: %s\n";
+			"name: %s\n"
+			"date of birth: %hu/%hu/%hu\n"
+			"diabetes: %s\n"
+			"dyslipidemia: %s\n"
+			"atherosclerosis: %s\n"
+			"gout: %s\n";
 
 	const uint8_t no_data = 0;
 };

@@ -763,7 +763,7 @@ static void uint32_to_buffer(uint32_t data, uint8_t* buffer) {
 }
 
 /*----------------------------------------------------------------------------*/
-static float buffer_to_foat(uint8_t *buffer) {
+static float buffer_to_float(uint8_t *buffer) {
 	float ret_val;
 	uint16_t dec;
 	uint16_t frac;
@@ -851,12 +851,6 @@ static int8_t get_basic_info(uint32_t patient_id, char* name, uint16_t* date_of_
 		CTRL_PRINTF("ctrl: gbi: Can't open %s\n", basic_info_path);
 		return -1;
 	}
-
-	/* get name */
-	fscanf(fp, "Name: %s\n", name);
-
-	/* get date of birth */
-	fscanf(fp, "Date of birth: %hu/%hu/%hu\n", &date_of_birth[0], &date_of_birth[1], &date_of_birth[2]);
 
 	/* get basic info data */
 	fscanf(fp, basic_info_block,
