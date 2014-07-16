@@ -15,6 +15,7 @@
 #include "rbps_glb.h"
 #include "zigbee_thread.h"
 #include "controller_thread.h"
+#include "wifi_process.h"
 
 using namespace std;
 

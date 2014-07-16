@@ -38,10 +38,11 @@ namespace rbps_ns {
 	const uint16_t update_node_rep_id = 0x0016; // out
 	const uint16_t detail_info_id = 0x0014; // in
 	const uint16_t detail_info_rep_id = 0x0015; // out
-	const uint16_t measure_node_id = 0x0004; // out
+	const uint16_t measure_node_id = 0x0004; // in
 	const uint16_t hold_measurement_id = 0x0018; // in
 	const uint16_t node_report_id = 0x0017; // in
 	const uint16_t prediction_rep_id = 0x0010; // out
+	const uint16_t new_schedule_id = 0x0011; // in
 
 	const uint16_t scan_node = 0x0001; // in
 	const uint16_t scan_node_rep = 0x0002; // out

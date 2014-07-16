@@ -2,4 +2,6 @@ bin
 *.~
 .settings
 .cproject
+.project
+.gitignore~
 main.cpp
