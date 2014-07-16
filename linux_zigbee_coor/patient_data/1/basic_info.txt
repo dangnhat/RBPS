@@ -1,7 +1,6 @@
-Name: Pham Huu Dang Nhat
-Date of birth: 7/12/1992
---- Medical data ---
-Diabetes: no
-Dyslipidemia: no
-Atherosclerosis: no
-Gout: no
+name: Pham_Huu_Dang_Nhat
+date of birth: 7/12/1992
+diabetes: no
+dyslipidemia: no
+atherosclerosis: no
+gout: no
