@@ -383,6 +383,10 @@ void* controller_thread_func(void *pdata) {
 			CTRL_PRINTF("ctrl: trigger schedule\n");
 
 			localtime_r(&old_time, &cur_time_s);
+
+			CTRL_PRINTF("ctrl: curtime: %dh%d, %d/%d/%d\n",
+					cur_time_s.tm_hour, cur_time_s.tm_min,
+					cur_time_s.tm_mday, cur_time_s.tm_mon+1, cur_time_s.tm_year);
 			for (uint16_t count = 0; count < cc_info.num_nodes; count++) {
 				node_p = &cc_info.nodes_list[count];
 				if (node_p->sched.abs_on) {
