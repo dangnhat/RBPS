@@ -1,3 +1,4 @@
+
 Time: 15:23
 Blood pressure: 120/80 (mmHg)
 Heart rate: 60 (pulses/min)
