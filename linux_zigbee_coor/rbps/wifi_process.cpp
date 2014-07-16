@@ -29,6 +29,7 @@
 #include "wifi_process.h"
 
 #define PORT 9999
+#define MAX_DEV 128
 
 using namespace rbps_ns;
 
@@ -37,19 +38,11 @@ int child2parent_mq_id = -1;
 
 short numOfConn = 0;
 int sock;   //a new sock be created when has a connection.
-int backgroundProc[128];
+int backgroundProc[MAX_DEV];
 bool isBackgroundProc = false;
 
 /* Define functions */
 void work(int sock);
-
-/**
- * @brief   called handler function when a process dies.
- *
- * @param[out]	none.
- * @param[in]	signum.
- */
-//void sigfunc(int signum);
 
 /**
  * @brief   called handler function when the connection is terminated.
@@ -86,7 +79,7 @@ void wifi_process_func() {
     struct sockaddr_in server_addr, client_addr; //structs contains info about address of server or client.
 
     /* Initialize value for variables */
-    bzero(backgroundProc, sizeof(backgroundProc));
+    memset(&backgroundProc, 0, MAX_DEV);
     memset(&server_addr, 0, sizeof(server_addr));
     memset(&client_addr, 0, sizeof(client_addr));
 
@@ -98,19 +91,19 @@ void wifi_process_func() {
     /* Create a listening sock */
     sockln = socket(AF_INET, SOCK_STREAM, 0);
     if(sockln < 0) {
-    	printf("ERROR opening sock");
+    	printf("Wifi: ERROR on opening socket.\n");
     }
     fcntl(sockln, F_SETFL, O_NONBLOCK);
 
     /* Binding sockln */
     int b = bind(sockln, (struct sockaddr *) &server_addr, sizeof(struct sockaddr_in));
     if(b < 0) {
-    	printf("ERROR on binding");
+    	printf("Wifi: ERROR on binding socket.\n");
     }
 
     /* Listening on sockln */
     listen(sockln, 5); //maximum 5 backlog in queue.
-    printf("listening...\n");
+    printf("Wifi: Listening on sockln...\n");
 
     leng = sizeof(client_addr);
 
@@ -120,16 +113,10 @@ void wifi_process_func() {
     while (1) {
         sock = accept(sockln, (struct sockaddr*) &client_addr, (socklen_t*) &leng);
         if (sock >= 0) {
-        	numOfConn++;
-			if(numOfConn == 1)
-				printf("Have 1 connection!\n");
-			else
-				printf("Have %d connections!\n", numOfConn);
-
             pid = fork();
 
             if (pid < 0)
-            	printf("ERROR on fork");
+            	printf("Wifi: ERROR on forking.\n");
 
             if (pid == 0) {
                 close(sockln);
@@ -141,25 +128,36 @@ void wifi_process_func() {
         	/* Update number of connection */
         	ret = msgrcv(child2parent_mq_id, &msg_s, 1, 0, IPC_NOWAIT);
 			if(ret > 0) {
-				printf("update connection\n");
-				if(msg_s.mtext[0] > 0) {
-					backgroundProc[search_pid(0)] = msg_s.mtype;
-				}else {
-					int pos = search_pid(msg_s.mtype);
-					if(pos > 0)
+
+				printf("Wifi: Update number of background connection.\n");
+				int pos = 0;
+				if(msg_s.mtext[0] == 1) {
+					printf("Wifi: Add pid %ld into array\n", msg_s.mtype);
+					pos = search_pid(0);
+					backgroundProc[pos] = msg_s.mtype;
+					printf("Wifi: %d\n", backgroundProc[pos]);
+				}else if(msg_s.mtext[0] == 0){
+					pos = search_pid((int)msg_s.mtype);
+					if(pos >= 0) {
+						printf("Wifi: Removed pid %ld out of array.\n", msg_s.mtype);
 						backgroundProc[pos] = 0;
-					else printf("No pid in array\n");
+					}else printf("Wifi: No pid %ld in array\n", msg_s.mtype);
 				}
+				printf("Wifi: pos of pid %ld in array is %d\n", msg_s.mtype, pos);
+				int j;
+				for(j = 0; j < MAX_DEV; j++)
+					printf("Wifi: %d\n", backgroundProc[j]);
 			}
 
 			/* Get update data from node */
         	ret = msgrcv(cc2wi_mq_id, &msg_s, mtext_max_size, wifi_boardcast_mtype, IPC_NOWAIT);
         	if(ret > 0) {
         		int i;
-        		for(i = 0; i < sizeof(backgroundProc); i++) {
+        		for(i = 0; i < MAX_DEV; i++) {
         			if(backgroundProc[i] > 0) {
+						printf("Wifi: Broadcast msg to all background process.\n");
         				msg_s.mtype = backgroundProc[i];
-        				msgsnd(parent2child_mq_id, &msg_s, mtext_max_size, 0);
+        				msgsnd(parent2child_mq_id, &msg_s, mtext_max_size, IPC_NOWAIT);
         			}
         		}
         	}
@@ -177,8 +175,8 @@ void wifi_process_func() {
 void work(int sock) {
 	mesg_t msg_s;
     int n, cmd, ret, pid;
-    char recvBuff[mtext_max_size]; //receiving buffer.
-    char sendBuff[mtext_max_size];
+    uint8_t recvBuff[mtext_max_size+1]; //receiving buffer.
+    uint8_t sendBuff[mtext_max_size];
 
     bzero(recvBuff, sizeof(recvBuff));
     bzero(sendBuff, sizeof(sendBuff));
@@ -188,15 +186,20 @@ void work(int sock) {
     /* Receiving data from client */
     n = read(sock, recvBuff, sizeof(recvBuff));
     if(n > 0) {
-//		memcpy(rcvbuff, recvBuff, mtext_max_size);
-//		int i;
-//		for(i = 0; i<259; i++)
-//			printf("Receiving buffer data: %d, i=%d\n", rcvbuff[i], i);
+		int i;
+		for(i = 0; i<258; i++)
+			printf("%d ", recvBuff[i]);
+		printf("\n");
 
 		if(recvBuff[mtext_max_size] == 1) {	//background process(keeping up connection with Android dev).
 			printf("==================================================\n");
-			printf("background process %d...\n", pid);
+			printf("Wifi: Background process %d...\n", pid);
 			isBackgroundProc = true;
+			numOfConn++;
+			if(numOfConn == 1)
+				printf("Wifi: Have 1 background connection!\n");
+			else
+				printf("Wifi: Have %d background connections!\n", numOfConn);
 
 			int msg_leng = 1;
 			msg_s.mtype = pid;
@@ -204,24 +207,25 @@ void work(int sock) {
 			/* Send pid to parent via msg_queue */
 			ret = msgsnd(child2parent_mq_id, &msg_s, msg_leng, 0);
 			if(ret != -1) {
-				printf("Sent msg to queue\n");
+				printf("Wifi: Sent bg proc info to parent via queue.\n");
 			}else
-				printf("ERROR on sending msg\n");
+				printf("Wifi: ERROR on sending bg proc info\n");
 
 			/* Get data from msg_queue */
             while(1) {
 			    ret = msgrcv(parent2child_mq_id, &msg_s, mtext_max_size, pid, IPC_NOWAIT);
 			    if(ret != -1) {
-				    printf("wifi: Received msg from queue\n");
+				    printf("Wifi: Received a broadcast msg from queue\n");
 				    memcpy(&sendBuff, &msg_s.mtext, mtext_max_size);
-				    if(send(sock, sendBuff, strlen(sendBuff), 0) < 0) {
-					    printf("ERROR sending to socket");
+				    if(send(sock, sendBuff, mtext_max_size, 0) < 0) {
+					    printf("Wifi: ERROR on sending udt msg to socket");
 					    return;
 				    }
 			    }
 			    n = read(sock, recvBuff, sizeof(recvBuff));
 			    if(n > 0) {
 			    	if(recvBuff[mtext_max_size] == 2) { //terminate the background process.
+						printf("Wifi: Terminate the bg proc.\n");
 						endBackgroundProc(sock);
 						return;
 					}
@@ -229,7 +233,7 @@ void work(int sock) {
             }
 		}else {	//temporary process when an Anroid device sends request.
 			printf("==================================================\n");
-			printf("temporary process %d...\n", pid);
+			printf("Wifi: Temporary process %d...\n", pid);
 
 			cmd = recvBuff[1]|(recvBuff[2]<<8);
 			/* Forwarding msg to msg_queue */
@@ -237,29 +241,29 @@ void work(int sock) {
 			memcpy(&msg_s.mtext, &recvBuff, mtext_max_size);
 			ret = msgsnd(wi2cc_mq_id, &msg_s, mtext_max_size, 0);
 			if(ret != -1) {
-				printf("Sent the forwarding msg to queue\n");
-			}else printf("ERROR on sending the forwarding msg\n");
+				printf("Wifi: Forward msg from socket to queue\n");
+			}else printf("Wifi: ERROR on sending the forwarding msg\n");
 
 			switch(cmd) {
 			case measure_node_id:
 			case update_schedule:
-				printf("no waiting\n");
+				printf("Wifi: No waiting\n");
 				return;
 				break;
 			default:
-				printf("waiting\n");
+				printf("Wifi: Waiting\n");
 				ret = msgrcv(cc2wi_mq_id, &msg_s, mtext_max_size, pid, 0);
 				if(ret != -1) {
-					printf("wifi: Received msg from queue\n");
+					printf("Wifi: Received reply data from queue\n");
 
 					memcpy(&sendBuff, &msg_s.mtext, mtext_max_size);
 					int i;
 					for(i = 0; i<mtext_max_size; i++) {
-						printf("data: %d ", sendBuff[i]);
+						printf("%d ", sendBuff[i]);
 					}
 					printf("\n");
-					if(send(sock, sendBuff, strlen(sendBuff), 0) < 0) {
-						printf("ERROR sending to socket");
+					if(send(sock, sendBuff, mtext_max_size, 0) < 0) {
+						printf("Wifi: ERROR on sending reply data to socket");
 						return;
 					}
 					break;
@@ -272,20 +276,19 @@ void work(int sock) {
 void create_local_msg_queue(void) {
 	parent2child_mq_id = msgget(IPC_PRIVATE, S_IRUSR | S_IWUSR);
 	if (parent2child_mq_id == -1) {
-		printf("can't create parent2child_mq_id\n");
+		printf("Wifi: Can't create parent2child_mq\n");
 	}
 
 	child2parent_mq_id = msgget(IPC_PRIVATE, S_IRUSR | S_IWUSR);
 	if (child2parent_mq_id == -1) {
-		printf("can't create child2parent_mq_id\n");
+		printf("Wifi: Can't create child2parent_mq\n");
 	}
 
-	printf("msg queue between parent and children has been created\n");
+	printf("Wifi: msg queue between parent and children has been created\n");
 }
 
 void endBackgroundProc(int sock) {
 	int pid = getpid();
-	printf("sigPID: %d\n", pid);
 	if(isBackgroundProc) {
 		mesg_t msg_s;
 		int msg_leng = 1;
@@ -295,16 +298,22 @@ void endBackgroundProc(int sock) {
 	}
 
 	numOfConn--;
-	close(sock);
-	printf("Terminate the process %d!\n", pid);
+	if(numOfConn == 1)
+		printf("Wifi: Remaining 1 background connection!\n");
+	else if(numOfConn > 0)
+		printf("Wifi: Remaining %d background connections!\n", numOfConn);
+
+//	close(sock);
+	printf("Wifi: Terminated the background process %d!\n", pid);
 	printf("==================================================\n");
 }
 
 int search_pid(int pid) {
 	int i;
-	for(i = 0; i < sizeof(backgroundProc); i++) {
-		if(backgroundProc[i] == pid)
+	for(i = 0; i < MAX_DEV; i++) {
+		if(backgroundProc[i] == pid) {
 			return i;
+		}
 	}
 	return -1;
 }
