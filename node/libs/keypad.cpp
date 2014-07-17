@@ -35,7 +35,7 @@ const uint8_t keypad_long_pressed_time = 100; /* *keypad_sampling_timecycle */
 
 const uint8_t num_of_row_in = 2;
 GPIO_TypeDef *row_in_port[num_of_row_in] = {GPIOC, GPIOC};
-const uint16_t row_in_pin[num_of_row_in] = {GPIO_Pin_0, GPIO_Pin_1};
+const uint16_t row_in_pin[num_of_row_in] = {GPIO_Pin_1, GPIO_Pin_0};
 const GPIOMode_TypeDef row_in_mode[num_of_row_in] = {GPIO_Mode_Out_PP, GPIO_Mode_Out_PP};
 const GPIOSpeed_TypeDef row_in_speed[num_of_row_in] = {GPIO_Speed_2MHz, GPIO_Speed_2MHz};
 const uint32_t row_in_RCC[num_of_row_in] = {RCC_APB2Periph_GPIOC, RCC_APB2Periph_GPIOC};

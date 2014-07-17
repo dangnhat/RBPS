@@ -11,9 +11,9 @@
  * MB1_SPI1, SPI : master mode          - baudRate = 2.25 MHz
  * with SM configuration:               - SPI_ns::device_t = SPI_ns::cc2530_1
  * - numOfSSLines (2)                   conf_GPIOsParams_s:
- * - GPIOs for CS (CS1: PB5, CS0: PB4)  - reset : PA4
- * - decode table.                      - srdy : PB1
- * ----------------------------------   - mrdy : PB0
+ * - GPIOs for CS (CS1: PB13, CS0: PB12)  - reset : PA4
+ * - decode table.                      - srdy : PB15
+ * ----------------------------------   - mrdy : PB14
  * CS1 | CS0 | device_t             |   (remember to attach, and re-init SPI
  * ----------------------------------    before use)
  *   0 |   0 | SPI_ns::allFree      |
@@ -44,11 +44,11 @@ HA_flash HA_aFlash;
 const uint8_t HA_SPI_numOfSSLines = 2;
 
 GPIO_TypeDef *HA_SPI_Cs0GPIO_port = GPIOB;
-const uint16_t HA_SPI_Cs0GPIO_pin = GPIO_Pin_4;
+const uint16_t HA_SPI_Cs0GPIO_pin = GPIO_Pin_12;
 const uint32_t HA_SPI_Cs0GPIO_clk = RCC_APB2Periph_GPIOB;
 
 GPIO_TypeDef *HA_SPI_Cs1GPIO_port = GPIOB;
-const uint16_t HA_SPI_Cs1GPIO_pin = GPIO_Pin_5;
+const uint16_t HA_SPI_Cs1GPIO_pin = GPIO_Pin_13;
 const uint32_t HA_SPI_Cs1GPIO_clk = RCC_APB2Periph_GPIOB;
 
 SPI_ns::SM_device_t HA_SPI_decodeTable [0x01 << HA_SPI_numOfSSLines] = {
@@ -71,11 +71,11 @@ const uint16_t HA_ZNP_resetGPIO_pin = GPIO_Pin_4;
 const uint32_t HA_ZNP_resetGPIO_clk = RCC_APB2Periph_GPIOA;
 
 GPIO_TypeDef *HA_ZNP_srdyGPIO_port = GPIOB;
-const uint16_t HA_ZNP_srdyGPIO_pin = GPIO_Pin_1;
+const uint16_t HA_ZNP_srdyGPIO_pin = GPIO_Pin_15;
 const uint32_t HA_ZNP_srdyGPIO_clk = RCC_APB2Periph_GPIOB;
 
 GPIO_TypeDef *HA_ZNP_mrdyGPIO_port = GPIOB;
-const uint16_t HA_ZNP_mrdyGPIO_pin = GPIO_Pin_0;
+const uint16_t HA_ZNP_mrdyGPIO_pin = GPIO_Pin_14;
 const uint32_t HA_ZNP_mrdyGPIO_clk = RCC_APB2Periph_GPIOB;
 const bool HA_ZNP_mrdyGPIO_isUsed = true;
 
