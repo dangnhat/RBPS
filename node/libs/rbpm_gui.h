@@ -165,9 +165,9 @@ public:
 	/**
 	 * @brief   print remote monitoring screen.
 	 *
-	 * @param[in]	measure_time, time in minute to measure.
+	 * @param[in]	measure_time, time in second to measure.
 	 */
-	void remote_print_screen(uint8_t measure_time);
+	void remote_print_screen(uint16_t measure_time);
 
 	/**
 	 * @brief   print battery status.

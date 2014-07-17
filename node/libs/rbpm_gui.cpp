@@ -243,7 +243,7 @@ void rbpm_gui::direct_scroll_up(void) {
 }
 
 /*----------------------------------------------------------------------------*/
-void rbpm_gui::remote_print_screen(uint8_t measure_time) {
+void rbpm_gui::remote_print_screen(uint16_t measure_time) {
 	/* clear */
 	clear();
 
