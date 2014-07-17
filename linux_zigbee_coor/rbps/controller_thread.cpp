@@ -229,7 +229,7 @@ static void get_detail_heart_rate(uint32_t patient_id, rbps_ns::detail_hr_t &det
  * @param[in]	patient_id,
  * @param[out]	detail_height,
  */
-static void get_detail_height(uint32_t patient_id, rbps_ns::detail_height_t detail_height);
+static void get_detail_height(uint32_t patient_id, rbps_ns::detail_height_t &detail_height);
 
 /**
  * @brief   get 3 most recent weight information. (in one month)
@@ -952,6 +952,7 @@ static void get_detail_blood_pressure(uint32_t patient_id, rbps_ns::detail_bp_t 
 
 	/* continue finding flags */
 	bool cont_recent_flag = true;
+	bool found_recent_flag = false;
 
 	bool cont_day_flag = true;
 	uint8_t avg_day_count = 0;
@@ -1005,7 +1006,7 @@ static void get_detail_blood_pressure(uint32_t patient_id, rbps_ns::detail_bp_t 
 						detail_bp.recent_time.month = month_count;
 						detail_bp.recent_time.year = year_count;
 
-						cont_recent_flag = false;
+						found_recent_flag = true;
 					} // end if
 
 					/* for avg and peak day */
@@ -1081,6 +1082,10 @@ static void get_detail_blood_pressure(uint32_t patient_id, rbps_ns::detail_bp_t 
 		}
 
 		/* set flags */
+		if (found_recent_flag == true) {
+			cont_recent_flag = false;
+		}
+
 		cont_day_flag = false;
 
 		if (wday == 0) {
@@ -1132,6 +1137,7 @@ static void get_detail_heart_rate(uint32_t patient_id, rbps_ns::detail_hr_t &det
 
 	/* continue finding flags */
 	bool cont_recent_flag = true;
+	bool found_recent_flag = false;
 
 	bool cont_day_flag = true;
 	uint8_t avg_day_count = 0;
@@ -1184,7 +1190,7 @@ static void get_detail_heart_rate(uint32_t patient_id, rbps_ns::detail_hr_t &det
 						detail_hr.recent_time.month = month_count;
 						detail_hr.recent_time.year = year_count;
 
-						cont_recent_flag = false;
+						found_recent_flag = true;
 					} // end if
 
 					/* for avg and peak day */
@@ -1237,6 +1243,10 @@ static void get_detail_heart_rate(uint32_t patient_id, rbps_ns::detail_hr_t &det
 		}
 
 		/* set flags */
+		if (found_recent_flag == true) {
+			cont_recent_flag = false;
+		}
+
 		cont_day_flag = false;
 
 		if (wday == 0) {
@@ -1265,7 +1275,7 @@ static void get_detail_heart_rate(uint32_t patient_id, rbps_ns::detail_hr_t &det
 }
 
 /*----------------------------------------------------------------------------*/
-static void get_detail_height(uint32_t patient_id, rbps_ns::detail_height_t detail_height) {
+static void get_detail_height(uint32_t patient_id, rbps_ns::detail_height_t &detail_height) {
 	time_t cur_time;
 	tm br_time;
 
@@ -1277,6 +1287,7 @@ static void get_detail_height(uint32_t patient_id, rbps_ns::detail_height_t deta
 	char filename[256];
 
 	bool cont_flag = true;
+
 
 	/* patient data block */
 	uint16_t hour, min;
@@ -1328,7 +1339,6 @@ static void get_detail_height(uint32_t patient_id, rbps_ns::detail_height_t deta
 					detail_height.recent_time.month = month_count;
 					detail_height.recent_time.year = year_count;
 					cont_flag = false;
-					break;
 
 				}// end if correct data
 
@@ -1337,8 +1347,6 @@ static void get_detail_height(uint32_t patient_id, rbps_ns::detail_height_t deta
 			/* close file */
 			fclose(fp);
 		}
-
-
 
 		/* check flags */
 		if (cont_flag == false) {
@@ -1363,6 +1371,7 @@ static void get_detail_weight(uint32_t patient_id, rbps_ns::detail_weight_t &det
 	char filename[256];
 
 	uint8_t wcount;
+	bool full_flag = false;
 
 	/* patient data block */
 	uint16_t hour, min;
@@ -1415,7 +1424,8 @@ static void get_detail_weight(uint32_t patient_id, rbps_ns::detail_weight_t &det
 					detail_weight.recent_time[wcount].year = year_count;
 					wcount++;
 					if (wcount == 3) {
-						break;
+						full_flag = true;
+						wcount = 0;
 					}
 
 				}// end if correct data
@@ -1428,7 +1438,7 @@ static void get_detail_weight(uint32_t patient_id, rbps_ns::detail_weight_t &det
 
 
 		/* check flags */
-		if (wcount == 3) {
+		if (full_flag) {
 			break;
 		}
 
