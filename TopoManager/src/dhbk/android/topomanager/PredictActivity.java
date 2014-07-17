@@ -36,10 +36,23 @@ public class PredictActivity extends Activity {
 		char prehypertension_risk = predictData[3];
 		char[] arrSysBpDec = misc.subCharArray(predictData, 4, 2);
 		char[] arrSysBpFrac = misc.subCharArray(predictData, 6, 2);
-		char[] arrDiasBp = misc.subCharArray(predictData, 8, 2); 
-		char[] arrHr = misc.subCharArray(predictData, 12, 2);
-		char[] arrBmi = misc.subCharArray(predictData, 16, 4); 
+		char[] arrDiasBpDec = misc.subCharArray(predictData, 8, 2);
+		char[] arrDiasBpFrac = misc.subCharArray(predictData, 10, 2);
+		char[] arrHrDec = misc.subCharArray(predictData, 12, 2);
+		char[] arrHrFrac = misc.subCharArray(predictData, 14, 2);
+		char[] arrBmiDec = misc.subCharArray(predictData, 16, 2);
+		char[] arrBmiFrac = misc.subCharArray(predictData, 18, 2);
 		char[] arrHistory = misc.subCharArray(predictData, 20, 4);
+		
+		int sysBpDec, sysBpFrac, diasBpDec, diasBpFrac, hrDec, hrFrac, bmiDec, bmiFrac;
+		sysBpDec = misc.digitCharArray2Int(arrSysBpDec);
+		sysBpFrac = misc.digitCharArray2Int(arrSysBpFrac);
+		diasBpDec = misc.digitCharArray2Int(arrDiasBpDec);
+		diasBpFrac = misc.digitCharArray2Int(arrDiasBpFrac);
+		hrDec = misc.digitCharArray2Int(arrHrDec);
+		hrFrac = misc.digitCharArray2Int(arrHrFrac);
+		bmiDec = misc.digitCharArray2Int(arrBmiDec);
+		bmiFrac = misc.digitCharArray2Int(arrBmiFrac);
 		
 		/* Get basic information */
 		String nID = misc.parse(basic_info, "", "n");
@@ -57,35 +70,46 @@ public class PredictActivity extends Activity {
 		}
 		
 		/* Get BP information */
-		String monthlyAvgSysBp = misc.parse(specData[2], "", "sys");
-		int sysBP = Integer.parseInt(monthlyAvgSysBp);
-		String monthlyAvgDiasBp = misc.parse(specData[2], "sys", "dias");
-		int diasBP = Integer.parseInt(monthlyAvgDiasBp);
+		String monthlyAvgSysBp = String.valueOf(sysBpDec) + ".";
+		if(sysBpFrac < 10)
+			monthlyAvgSysBp += "0" + String.valueOf(sysBpFrac);
+		else 
+			monthlyAvgSysBp += String.valueOf(sysBpFrac);
+		String monthlyAvgDiasBp = String.valueOf(diasBpDec) + ".";
+		if(diasBpFrac < 10)
+			monthlyAvgDiasBp += "0" + String.valueOf(diasBpFrac);
+		else 
+			monthlyAvgDiasBp += String.valueOf(diasBpFrac);
 		
 		String colorSysBp = "green";
 		String colorDiasBp = "blue";
 		String highSys = emptyBox;
 		String highDias = emptyBox;
-		if(sysBP > 135) {
+		if(sysBpDec >= 135) {
 			highSys = fillBox;
 			colorSysBp = "red";
 		}
-		if(diasBP > 85) {
+		if(diasBpDec >= 85) {
 			highDias = fillBox;
 			colorDiasBp = "red";
 		}
 		
 		/* Get HR and BMI information */
-		String monthlyAvgHr = misc.parse(specData[2], "dias", "hr");
-		String monthlyAvgBmi = misc.parse(specData[2], "hr", "");
+		String monthlyAvgHr = String.valueOf(hrDec) + ".";
+		if(hrFrac < 10)
+			monthlyAvgHr += "0" + String.valueOf(hrFrac);
+		else 
+			monthlyAvgHr += String.valueOf(hrFrac);
+		String monthlyAvgBmi = String.valueOf(bmiDec) + ".";
+		if(bmiFrac < 10)
+			monthlyAvgBmi += "0" + String.valueOf(bmiFrac);
+		else 
+			monthlyAvgBmi += String.valueOf(bmiFrac);
 		
 		/* Get Medical history information */
 		String[] history = new String[4];
-		history[0] = misc.parse(specData[3], 0, 1);
-		history[1] = misc.parse(specData[3], 1, 2);
-		history[2] = misc.parse(specData[3], 2, 3);
-		history[3] = misc.parse(specData[3], 3);
 		for(int i = 0; i < 4; i++) {
+			history[i] = "";
 			if(arrHistory[i] == 0)
 				history[i] = emptyBox;
 			else history[i] = fillBox;
@@ -107,7 +131,7 @@ public class PredictActivity extends Activity {
 				+tab+highDias+" Dias_BP > <b>85</b>mmHg?<br>"
 				
 				+"_ Monthly average HR <small>(pulses/min)</small>: <font color=\"green\">"+monthlyAvgHr+"</font>.<br>"
-				+"_ Monthly average BMI <small>(kg/m<sup>2</sup>)</small>: <font color=\"green\">"+monthlyAvgBmi+"</font>.</p>"
+				+"_ Monthly average BMI <small>(kg/m<sup>2</sup>)</small>: <font color=\"blue\">"+monthlyAvgBmi+"</font>.</p>"
 				
 				+hrLine
 				
@@ -138,16 +162,6 @@ public class PredictActivity extends Activity {
 			return true;
 		}
 		return super.onOptionsItemSelected(item);
-	}
-
-	public String[] parseInfoFromPredictData(String data){
-		String[] ret = new String[4];
-		ret[0] = misc.parse(data, "", "prehyper");
-		ret[1] = misc.parse(data, "prehyper", "avgmonth");
-		ret[2] = misc.parse(data, "avgmonth", "history");
-		ret[3] = misc.parse(data, "history", "");
-		
-		return ret;
 	}
 	
 }

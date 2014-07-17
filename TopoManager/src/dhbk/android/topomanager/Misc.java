@@ -140,7 +140,7 @@ public class Misc {
 		String result = "";
 		int leng = source.length;
 		for(int i = 0; i < leng; i++) {
-			result += String.valueOf((int)source[i]);
+			result += String.valueOf((int)source[i])+" ";
 		}
 		return result;
 	}
@@ -148,9 +148,103 @@ public class Misc {
 	public char[] int2charArray(int source) {
 		char[] result = new char[4];
 		for(int i = 0; i < 4; i++) {
-			result[i] = (char)(source>>(i*8));
+			result[i] = (char)((source>>(i*8))&0xff);
 		}
 		return result;
+	}
+	
+	/* change 4elements char array of float number to String */
+	public String floatCharArr2Str(char[] source) {
+		String result = "";
+		char[] decByte = subCharArray(source, 0, 2);
+		int dec = digitCharArray2Int(decByte);
+		char[] fracByte = subCharArray(source, 2, 2);
+		int frac = digitCharArray2Int(fracByte);
+		result = String.valueOf(dec)+"."+String.valueOf(frac);
+		return result;
+	}
+	
+	public String timeCharArr2String(char[] time) {
+		String result = "";
+		/* hh:mm */
+		if(time.length == 2) {
+			int hour = (int)time[0];
+			int min = (int)time[1];
+			String hh = String.valueOf(hour);
+			String mm = String.valueOf(min);
+			if(hour < 10) 
+				hh = "0"+String.valueOf(hour);
+			if(min < 10)
+				mm = "0"+String.valueOf(min);
+			result = hh+"h"+mm;
+		}
+		/* dd/MM/yyyy */
+		if(time.length == 4) {
+			int date = (int)time[0];
+			int month = (int)time[1];
+			char[] yearArr = subCharArray(time, 2, 2);
+			int year = digitCharArray2Int(yearArr);
+			
+			String dd = String.valueOf(date);
+			String MM = String.valueOf(month);
+			if(date < 10) 
+				dd = "0"+String.valueOf(date);
+			if(month < 10)
+				MM = "0"+String.valueOf(month);
+			result = dd+"/"+MM+"/"+String.valueOf(year);
+		}
+		/* hh:mm, dd/MM/yyyy */
+		if(time.length == 6) {
+			int hour = (int)time[0];
+			int min = (int)time[1];
+			String hh = String.valueOf(hour);
+			String mm = String.valueOf(min);
+			if(hour < 10) 
+				hh = "0"+String.valueOf(hour);
+			if(min < 10)
+				mm = "0"+String.valueOf(min);
+			result = hh+"h"+mm;
+			
+			int date = (int)time[2];
+			int month = (int)time[3];
+			char[] yearArr = subCharArray(time, 4, 2);
+			int year = digitCharArray2Int(yearArr);
+			
+			String dd = String.valueOf(date);
+			String MM = String.valueOf(month);
+			if(date < 10) 
+				dd = "0"+String.valueOf(date);
+			if(month < 10)
+				MM = "0"+String.valueOf(month);
+			result += ", "+dd+"/"+MM+"/"+String.valueOf(year);
+		}
+		
+		return result;
+	}
+	
+	public String concatNameArr2String(char[] source, int length) {
+		String result = "";
+		char[] newNameArr;
+		int i = 0;
+		for(i = 0; i < length; i++) {
+			if(source[i] == 0) {
+				break;
+			}
+		}
+		newNameArr = subCharArray(source, 0, i);
+		result = String.valueOf(newNameArr);
+		return result;
+	}
+	
+	/* Create a frame */
+	public char[] createDataFrame(int cmd, char[] data) {
+		char[] frame = new char[258];
+		frame[0] = (char)data.length;
+		char[] command = int2charArray(cmd);
+		frame[1] = command[0];
+		frame[2] = command[1];
+		insData2Arr(frame, data, 3);
+		return frame;
 	}
 	
 }

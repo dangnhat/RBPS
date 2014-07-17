@@ -31,6 +31,14 @@ public class NodeInfo {
 		this.valueHR = valueHR;
 	}
 	
+	public void setPatientId(int pID) {
+		this.pID = pID;
+	}
+	
+	public void setName(String name) {
+		this.name = name;
+	}
+	
 	public void setDateAndTimeStamp(int hour, int min, int date, int month, int year) {
 		this.hour = hour;
 		this.min = min;

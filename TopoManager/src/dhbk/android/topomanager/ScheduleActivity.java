@@ -1,10 +1,10 @@
 package dhbk.android.topomanager;
 
+import java.io.BufferedWriter;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -22,11 +22,9 @@ import android.widget.Toast;
 public class ScheduleActivity extends Activity {
 	Misc misc = new Misc();
 	final int SERVER_PORT = 9999;
+	int nodeID;
 	final String SERVER_IP_DEFAULT = "192.168.150.1";
-	public final String newScheduleCmd = "11";
-	public final String clearScheduleCmd = "12";
-	private final char new_schedule = 0x11;
-	private final char clear_schedule = 0x0001;
+	private final char new_schedule = 0x0013;
 	CheckBox scheduleCheck;
 	CheckBox absCheck;
 	CheckBox relativeCheck;
@@ -57,35 +55,40 @@ public class ScheduleActivity extends Activity {
 		
 		Intent intent = getIntent();
 		Bundle bundle = intent.getExtras();
-		String scheduleInfo = bundle.getString("data");
+		char[] scheduleInfo = bundle.getCharArray("schedule");
+		nodeID = bundle.getInt("nID");
 		
-		String isSchedule = misc.parse(scheduleInfo, "", "schedule");
-		String isAbs = "0";
-		String timeScheduled = "";
-		String hour, min, date, month, year;
-		if(isSchedule.equals("1")) {
+		char isAbsChar = scheduleInfo[7];
+		char isRelativeChar = scheduleInfo[14];
+		char hourAbs, minAbs, date, month, hourRel, minRel;
+		char[] yearArr;
+		hourAbs = scheduleInfo[8];
+		minAbs = scheduleInfo[9];
+		date = scheduleInfo[10];
+		month = scheduleInfo[11];
+		yearArr = misc.subCharArray(scheduleInfo, 12, 2);
+		int year = misc.digitCharArray2Int(yearArr);
+		hourRel = scheduleInfo[15];
+		minRel = scheduleInfo[16];
+		
+		if(isAbsChar == 1 || isRelativeChar == 1) {
 			bigLayout.setVisibility(View.VISIBLE);
 			scheduleCheck.setChecked(true);
-			timeScheduled = misc.parse(scheduleInfo, "abs", "");
-			hour = misc.getHourFromString(timeScheduled);
-			min = misc.getMinuteFromString(timeScheduled);
-			hourIn.setText(hour);
-			minIn.setText(min);
-			isAbs = misc.parse(scheduleInfo, "schedule", "abs");
-			if(isAbs.equals("1")) {
+			if(isAbsChar == 1) {
 				absCheck.setChecked(true);
 				relativeCheck.setChecked(false);
 				dateLayout.setVisibility(View.VISIBLE);
-				date = misc.getDateFromString(timeScheduled);
-				month = misc.getMonthFromString(timeScheduled);
-				year = misc.getYearFromString(timeScheduled);
-				dateIn.setText(date);
-				monthIn.setText(month);
-				yearIn.setText(year);
-			}else if(isAbs.equals("0")) {
+				hourIn.setText(String.valueOf((int)hourAbs));
+				minIn.setText(String.valueOf((int)minAbs));
+				dateIn.setText(String.valueOf((int)date));
+				monthIn.setText(String.valueOf((int)month));
+				yearIn.setText(String.valueOf(year));
+			}else if(isRelativeChar == 1) {
 				absCheck.setChecked(false);
 				relativeCheck.setChecked(true);
 				dateLayout.setVisibility(View.INVISIBLE);
+				hourIn.setText(String.valueOf((int)hourRel));
+				minIn.setText(String.valueOf((int)minRel));
 			}
 		}else {
 			scheduleCheck.setChecked(false);
@@ -123,48 +126,54 @@ public class ScheduleActivity extends Activity {
 	}
 	
 	public void apllyTime(View viewClick) {
-		SimpleDateFormat curFormater = new SimpleDateFormat("HHmmddMMyyyy"); 
-		Calendar cal = Calendar.getInstance();
-		String timeInstance = curFormater.format(cal.getTime());
-		
-		String hourInstance = misc.getHourFromString(timeInstance);
-		String minInstance = misc.getMinuteFromString(timeInstance);
-		String dateInstance = misc.getDateFromString(timeInstance);
-		String monthInstance = misc.getMonthFromString(timeInstance);
-		String yearInstance = misc.getYearFromString(timeInstance);
+//		SimpleDateFormat curFormater = new SimpleDateFormat("HHmmddMMyyyy"); 
+//		Calendar cal = Calendar.getInstance();
+//		String timeInstance = curFormater.format(cal.getTime());
+//		
+//		String hourInstance = misc.getHourFromString(timeInstance);
+//		String minInstance = misc.getMinuteFromString(timeInstance);
+//		String dateInstance = misc.getDateFromString(timeInstance);
+//		String monthInstance = misc.getMonthFromString(timeInstance);
+//		String yearInstance = misc.getYearFromString(timeInstance);
 		
 		if(MainActivity.conn) {
-			String cmd = "";
-			String data = "";
+			char[] data = new char[14];
+			for(int i = 0; i < data.length; i++) {
+				data[i] = 0;
+			}
 			if(scheduleCheck.isChecked()) {
-				cmd = newScheduleCmd;
+				int hour = Integer.parseInt(hourIn.getText().toString());
+				int min = Integer.parseInt(minIn.getText().toString());
+				char[] nIdArr = misc.int2charArray(nodeID);
+				misc.insData2Arr(data, nIdArr, 0);
 				if(absCheck.isChecked()) {
-					if(Integer.parseInt(yearInstance) > Integer.parseInt(yearIn.getText().toString())) {
-						Toast.makeText(ScheduleActivity.this, "Invalid year!", Toast.LENGTH_SHORT).show();
-						return;
-					}else if(Integer.parseInt(monthInstance) > Integer.parseInt(monthIn.getText().toString())) {
-						Toast.makeText(ScheduleActivity.this, "Invalid month!", Toast.LENGTH_SHORT).show();
-						return;
-					}else if(Integer.parseInt(dateInstance) > Integer.parseInt(dateIn.getText().toString())) {
-						Toast.makeText(ScheduleActivity.this, "Invalid date!", Toast.LENGTH_SHORT).show();
-						return;
-					}else if(Integer.parseInt(hourInstance) > Integer.parseInt(hourIn.getText().toString())) {
-						Toast.makeText(ScheduleActivity.this, "Invalid hour!", Toast.LENGTH_SHORT).show();
-						return;
-					}else if(Integer.parseInt(minInstance) > Integer.parseInt(minIn.getText().toString())) {
-						Toast.makeText(ScheduleActivity.this, "Invalid minute!", Toast.LENGTH_SHORT).show();
-						return;
-					}
-					data = "1schedule1abs" + getTimeFromText() + getDateFromText();
+					int date = Integer.parseInt(dateIn.getText().toString());
+					int month = Integer.parseInt(monthIn.getText().toString());
+					int year = Integer.parseInt(yearIn.getText().toString());
+					char[] yyyy = misc.int2charArray(year);
+					
+					data[4] = 1;
+					data[5] = (char)hour;
+					data[6] = (char)min;
+					data[7] = (char)date;
+					data[8] = (char)month;
+					data[9] = yyyy[0];
+					data[10] = yyyy[1];
+					data[11] = 0;
+					data[12] = data[13] = 0;
 				}else {
-					data = "1schedule0abs" + getTimeFromText();
+					data[4] = 0;
+					data[11] = 1;
+					data[12] = (char)hour;
+					data[13] = (char)min;
 				}
 			}else {
-				cmd = clearScheduleCmd;
+				data[4] = 0;
+				data[11] = 0;
 			}
-			
+//			Log.d("apply", misc.digitCharArray2String(data));
 			/* Create and send frame */
-			sendApply(createDataFrame(cmd, data));
+			sendApply(misc.createDataFrame(new_schedule, data));
 		}else
 			Toast.makeText(ScheduleActivity.this, "No connection. Please connect again!", Toast.LENGTH_SHORT).show();
 		
@@ -211,7 +220,7 @@ public class ScheduleActivity extends Activity {
 		return date;
 	}
 	
-	public void sendApply(String data) {
+	public void sendApply(char[] data) {
 		/* Connect to server */
 		try {
 			MainActivity.socketTemp = new Socket();
@@ -226,7 +235,7 @@ public class ScheduleActivity extends Activity {
         }
 		/* Open a output stream and a input stream to send and receive data */
         try{
-        	PrintWriter out = new PrintWriter(MainActivity.socketTemp.getOutputStream(), true);
+        	PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(MainActivity.socketTemp.getOutputStream(), "ISO-8859-1")), true);
             /* Send frame to server */
             out.println(data);
         }catch(Exception e) {
