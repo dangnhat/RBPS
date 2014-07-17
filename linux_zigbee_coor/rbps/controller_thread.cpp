@@ -1896,6 +1896,7 @@ static void update_schedule_wifi_func(cc_info_t &cc_info, rbps_ns::mesg_t mesg) 
 
 	/* get node_id */
 	node_id = buffer_to_uint32(&mesg.mtext[3]);
+	rec_data_p += 4;
 
 	/* set schedule data */
 	node_p = find_node(cc_info, node_id);
