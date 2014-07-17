@@ -789,7 +789,7 @@ static void float_to_buffer(float data, uint8_t *buffer) {
 	frac = ((uint16_t) (data * 100)) % 100;
 
 	uint16_to_buffer(dec, buffer);
-	uint16_to_buffer(frac, buffer);
+	uint16_to_buffer(frac, buffer+2);
 }
 
 /*----------------------------------------------------------------------------*/
