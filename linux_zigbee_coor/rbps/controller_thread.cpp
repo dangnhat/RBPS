@@ -443,45 +443,49 @@ static void update_node_func(cc_info_t &cc_info, rbps_ns::mesg_t &mesg) {
 	node_id = buffer_to_uint32(data_buffer);
 	patient_id = buffer_to_uint32(data_buffer + 4);
 
-	/* find patient id in patient id list */
-	fp = fopen(patient_id_list_path, "r");
-	if (fp == NULL) {
-		CTRL_PRINTF("ctrl: unf: can't open %s\n", patient_id_list_path);
-		return;
-	}
+	if (patient_id != 0) {
+		CTRL_PRINTF("ctrl: unf: patient_id != 0, check patient_id\n");
 
-	found_patient_id = false;
-	while (!feof(fp)) {
-		fscanf(fp, "%u", &patient_id_file);
-
-		if (patient_id_file == patient_id) {
-			found_patient_id = true;
-			break;
+		/* find patient id in patient id list */
+		fp = fopen(patient_id_list_path, "r");
+		if (fp == NULL) {
+			CTRL_PRINTF("ctrl: unf: can't open %s\n", patient_id_list_path);
+			return;
 		}
-	}
 
-	fclose(fp);
+		found_patient_id = false;
+		while (!feof(fp)) {
+			fscanf(fp, "%u", &patient_id_file);
 
-	if (found_patient_id == false) {
-		CTRL_PRINTF("ctrl: unf: can't find patient_id %d, ret\n", patient_id);
+			if (patient_id_file == patient_id) {
+				found_patient_id = true;
+				break;
+			}
+		}
 
-		/* send incorrect update_node_rep to zigbee thread */
-		ret_data_buffer[0] = rbps_ns::status_false;
+		fclose(fp);
+
+		if (found_patient_id == false) {
+			CTRL_PRINTF("ctrl: unf: can't find patient_id %d, ret\n", patient_id);
+
+			/* send incorrect update_node_rep to zigbee thread */
+			ret_data_buffer[0] = rbps_ns::status_false;
+			forward_gframe(rbps_ns::cc2zb_mq_id, mesg.mtype, rbps_ns::update_node_rep_length,
+					rbps_ns::update_node_rep_id, ret_data_buffer);
+			CTRL_PRINTF("ctrl: unf: sent incorrect update_node_rep to zigbee (dest addr %x)",
+					(uint16_t)mesg.mtype);
+
+			return;
+		}
+		CTRL_PRINTF("ctrl: unf: found patient_id %d\n", patient_id);
+
+		/* send correct update_node_rep to zigbee thread */
+		ret_data_buffer[0] = rbps_ns::status_true;
 		forward_gframe(rbps_ns::cc2zb_mq_id, mesg.mtype, rbps_ns::update_node_rep_length,
 				rbps_ns::update_node_rep_id, ret_data_buffer);
-		CTRL_PRINTF("ctrl: unf: sent incorrect update_node_rep to zigbee (dest addr %x)",
+		CTRL_PRINTF("ctrl: unf: sent correct update_node_rep to zigbee (dest addr %x)\n",
 				(uint16_t)mesg.mtype);
-
-		return;
 	}
-	CTRL_PRINTF("ctrl: unf: found patient_id %d\n", patient_id);
-
-	/* send correct update_node_rep to zigbee thread */
-	ret_data_buffer[0] = rbps_ns::status_true;
-	forward_gframe(rbps_ns::cc2zb_mq_id, mesg.mtype, rbps_ns::update_node_rep_length,
-			rbps_ns::update_node_rep_id, ret_data_buffer);
-	CTRL_PRINTF("ctrl: unf: sent correct update_node_rep to zigbee (dest addr %x)\n",
-			(uint16_t)mesg.mtype);
 
 	/* update node data */
 	node_p = find_node(cc_info, node_id);
