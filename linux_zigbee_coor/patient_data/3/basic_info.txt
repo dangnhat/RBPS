@@ -1,0 +1,6 @@
+name: Tran_Thi_Ngo
+date of birth: 1/1/1930
+diabetes: yes
+dyslipidemia: no
+atherosclerosis: yes
+gout: no

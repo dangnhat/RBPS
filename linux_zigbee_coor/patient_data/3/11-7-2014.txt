@@ -1,0 +1,12 @@
+
+Time: 8:00
+Blood pressure: 130/80 (mmHg)
+Heart rate: 0 (pulses/min)
+Weight: 0 (kg)
+Height: 0 (cm)
+
+Time: 15:00
+Blood pressure: 140/70 (mmHg)
+Heart rate: 0 (pulses/min)
+Weight: 0 (kg)
+Height: 0 (cm)
