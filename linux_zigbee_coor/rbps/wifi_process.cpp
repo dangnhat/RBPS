@@ -228,6 +228,13 @@ void work(int sock) {
 			    if(ret != -1) {
 				    printf("Wifi: Pid %d received a broadcast msg from queue.\n", pid);
 				    memcpy(&sendBuff, &msg_s.mtext, mtext_max_size);
+
+				    int i;
+					for(i = 0; i<mtext_max_size; i++) {
+						printf("%d ", sendBuff[i]);
+					}
+					printf("\n");
+
 				    if(send(sock, sendBuff, mtext_max_size, 0) < 0) {
 					    printf("Wifi: ERROR on sending udt msg to socket\n");
 					    return;

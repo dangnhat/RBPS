@@ -579,8 +579,7 @@ static void node_report_node_func(cc_info_t &cc_info, rbps_ns::mesg_t &mesg) {
 
 	rbps_ns::predict_data_t predict_s;
 	rbps_ns::mesg_t wifi_mesg;
-	uint16_t dec_part;
-	uint16_t frac_part;
+	uint8_t *zigbee_data_p;
 
 	/* extract data from frame */
 	node_id = buffer_to_uint32(buffer_p);
@@ -631,7 +630,7 @@ static void node_report_node_func(cc_info_t &cc_info, rbps_ns::mesg_t &mesg) {
 	min = (uint8_t)br_time.tm_min;
 	day = (uint8_t)br_time.tm_mday;
 	month = (uint8_t)br_time.tm_mon + 1; // 1 -> 12
-	year = (uint16_t)br_time.tm_year + 1990;
+	year = (uint16_t)br_time.tm_year + 1900;
 
 	CTRL_PRINTF("ctrl: nr: Data extracted, node %u, sys %u, dias %u, hr %hu, hour %hu, min %hu,"
 			"day %hu, month %hu, year %u\n",
@@ -675,10 +674,9 @@ static void node_report_node_func(cc_info_t &cc_info, rbps_ns::mesg_t &mesg) {
 	*min_pos = min;
 	*day_pos = day;
 	*month_pos = month;
-	*year_firstpos = (uint8_t)year;
-	*(year_firstpos + 1) = (uint8_t)(year >> 8);
+	uint16_to_buffer(year, year_firstpos);
 
-	memcpy(wifi_mesg.mtext, mesg.mtext, rbps_ns::node_report_length);
+	memcpy(wifi_mesg.mtext, mesg.mtext, rbps_ns::node_report_length + 3); // fix
 	forward_gframe(rbps_ns::cc2wi_mq_id, rbps_ns::wifi_boardcast_mtype,
 			rbps_ns::node_report_length, rbps_ns::node_report_id, &wifi_mesg.mtext[3]);
 	CTRL_PRINTF("ctrl: nr: forwarded to wifi process\n");
@@ -696,38 +694,27 @@ static void node_report_node_func(cc_info_t &cc_info, rbps_ns::mesg_t &mesg) {
 		zigbee_mesg.mtext[2] = (uint8_t)(rbps_ns::prediction_rep_id >> 8);
 		zigbee_mesg.mtext[3] = predict_s.prehypertension_risk ? 1 : 0;
 
-		dec_part = (uint16_t)predict_s.avg_sys;
-		frac_part = ((uint16_t)(predict_s.avg_sys * 100)) % 100;
-		zigbee_mesg.mtext[4] = (uint8_t)dec_part;
-		zigbee_mesg.mtext[5] = (uint8_t)(dec_part >> 8);
-		zigbee_mesg.mtext[6] = (uint8_t)frac_part;
-		zigbee_mesg.mtext[7] = (uint8_t)(frac_part >> 8);
+		zigbee_data_p = &zigbee_mesg.mtext[4];
+		float_to_buffer(predict_s.avg_sys, zigbee_data_p);
+		zigbee_data_p += 4;
 
-		dec_part = (uint16_t)predict_s.avg_dias;
-		frac_part = ((uint16_t)(predict_s.avg_dias * 100)) % 100;
-		zigbee_mesg.mtext[8] = (uint8_t)dec_part;
-		zigbee_mesg.mtext[9] = (uint8_t)(dec_part >> 8);
-		zigbee_mesg.mtext[10] = (uint8_t)frac_part;
-		zigbee_mesg.mtext[11] = (uint8_t)(frac_part >> 8);
+		float_to_buffer(predict_s.avg_dias, zigbee_data_p);
+		zigbee_data_p += 4;
 
-		dec_part = (uint16_t)predict_s.avg_heart_rate;
-		frac_part = ((uint16_t)(predict_s.avg_heart_rate * 100)) % 100;
-		zigbee_mesg.mtext[12] = (uint8_t)dec_part;
-		zigbee_mesg.mtext[13] = (uint8_t)(dec_part >> 8);
-		zigbee_mesg.mtext[14] = (uint8_t)frac_part;
-		zigbee_mesg.mtext[15] = (uint8_t)(frac_part >> 8);
+		float_to_buffer(predict_s.avg_heart_rate, zigbee_data_p);
+		zigbee_data_p += 4;
 
-		dec_part = (uint16_t)predict_s.avg_bmi;
-		frac_part = ((uint16_t)(predict_s.avg_bmi * 100)) % 100;
-		zigbee_mesg.mtext[16] = (uint8_t)dec_part;
-		zigbee_mesg.mtext[17] = (uint8_t)(dec_part >> 8);
-		zigbee_mesg.mtext[18] = (uint8_t)frac_part;
-		zigbee_mesg.mtext[19] = (uint8_t)(frac_part >> 8);
+		float_to_buffer(predict_s.avg_bmi, zigbee_data_p);
+		zigbee_data_p += 4;
 
-		zigbee_mesg.mtext[20] = predict_s.diabetes ? 1 : 0;
-		zigbee_mesg.mtext[21] = predict_s.dyslipidemia ? 1 : 0;
-		zigbee_mesg.mtext[22] = predict_s.atherosclerosis ? 1 : 0;
-		zigbee_mesg.mtext[23] = predict_s.gout ? 1 : 0;
+		*zigbee_data_p = predict_s.diabetes ? 1 : 0;
+		zigbee_data_p++;
+		*zigbee_data_p = predict_s.dyslipidemia ? 1 : 0;
+		zigbee_data_p++;
+		*zigbee_data_p = predict_s.atherosclerosis ? 1 : 0;
+		zigbee_data_p++;
+		*zigbee_data_p = predict_s.gout ? 1 : 0;
+		zigbee_data_p++;
 
 		forward_gframe(rbps_ns::cc2zb_mq_id, mesg.mtype, rbps_ns::prediction_rep_length,
 				rbps_ns::prediction_rep_id, &zigbee_mesg.mtext[3]);
