@@ -39,6 +39,12 @@ GPIOMode_TypeDef EN_mode = GPIO_Mode_Out_PP;
 GPIOSpeed_TypeDef EN_speed = GPIO_Speed_2MHz;
 const uint32_t EN_RCC = RCC_APB2Periph_GPIOB;
 
+GPIO_TypeDef *BL_port = GPIOB;
+const uint16_t BL_pin = GPIO_Pin_0;
+GPIOMode_TypeDef BL_mode = GPIO_Mode_Out_PP;
+GPIOSpeed_TypeDef BL_speed = GPIO_Speed_2MHz;
+const uint32_t BL_RCC = RCC_APB2Periph_GPIOB;
+
 GPIO_TypeDef *DB4_port = GPIOB;
 const uint16_t DB4_pin = GPIO_Pin_10;
 GPIOMode_TypeDef DB4_mode = GPIO_Mode_Out_PP;
@@ -401,6 +407,9 @@ void clcd20x4::send_byte(uint8_t RS, uint8_t RW, uint8_t D7D0) {
 
 /*----------------------------------------------------------------------------*/
 void clcd20x4::init_lcd(void) {
+
+	/* Set back light */
+	GPIO_SetBits(GPIOB,GPIO_Pin_0);
 	/* wait for >40ms */
 	delay_us(100000);
 
@@ -520,6 +529,15 @@ void clcd20x4::init_gpios(void) {
 
 	GPIOs_RCC_fp(EN_RCC, ENABLE);
 	GPIO_Init(EN_port, &gpio_init_s);
+
+	/* Init back light lines */
+
+	gpio_init_s.GPIO_Mode = BL_mode;
+	gpio_init_s.GPIO_Speed = BL_speed;
+	gpio_init_s.GPIO_Pin = BL_pin;
+
+	GPIOs_RCC_fp(BL_RCC, ENABLE);
+	GPIO_Init(BL_port, &gpio_init_s);
 
 	/* Init data lines */
 	gpio_init_s.GPIO_Mode = DB7_mode[out];

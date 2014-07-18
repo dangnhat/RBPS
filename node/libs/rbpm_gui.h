@@ -80,8 +80,9 @@ namespace rbpm_gui_ns {
 	const uint8_t direct_screen_height = 4;
 
 	const int8_t remote_screen[] =
-			"-Remote monitoring-"
-			"\tR. Measure in: %d'";
+			"-Remote monitoring-\n"
+			"\tMeasure in: %d'";
+	const uint8_t measure_time_pos[] = {2, 14};
 };
 
 /* class */
@@ -170,6 +171,13 @@ public:
 	void remote_print_screen(uint16_t measure_time);
 
 	/**
+	 * @brief   print only measure time in remote monitoring screen.
+	 *
+	 * @param[in]	measure_time, time in second to measure.
+	 */
+	void remote_print_measure_time(uint16_t measure_time);
+
+	/**
 	 * @brief   print battery status.
 	 *
 	 * @param[in]	status, battery status (%).
@@ -188,6 +196,8 @@ private:
 
 	uint8_t start_old_patient_id_strlen;
 	uint8_t start_old_check_mesg_strlen;
+
+	uint8_t remote_old_measure_time_strlen;
 
 	int8_t direct_screen_buffer[rbpm_gui_ns::direct_screen_nrows]
 	                           [rbpm_gui_ns::direct_screen_ncols + 1];

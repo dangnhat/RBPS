@@ -258,6 +258,31 @@ void rbpm_gui::remote_print_screen(uint16_t measure_time) {
 }
 
 /*----------------------------------------------------------------------------*/
+void rbpm_gui::remote_print_measure_time(uint16_t measure_time) {
+	uint8_t count;
+	int8_t measure_time_str[16];
+
+	/* set cursor */
+	set_cursor(rbpm_gui_ns::measure_time_pos[0], rbpm_gui_ns::measure_time_pos[1]);
+
+	/* clear old patient_id */
+	for (count = 0; count < remote_old_measure_time_strlen; count++) {
+		this->printf(" ");
+	}
+
+	/* set cursor */
+	set_cursor(rbpm_gui_ns::measure_time_pos[0], rbpm_gui_ns::measure_time_pos[1]);
+
+	/* print  patient_id */
+	this->printf("%d", measure_time);
+
+	/* save patient_id strlen*/
+	snprintf((char *)measure_time_str, 16, "%u", measure_time);
+	remote_old_measure_time_strlen = strlen((const char *)measure_time_str);
+
+}
+
+/*----------------------------------------------------------------------------*/
 void rbpm_gui::print_battery_status(uint8_t status) {
 	/* set cursor */
 	set_cursor(rbpm_gui_ns::battery_pos[0], rbpm_gui_ns::battery_pos[1]);
