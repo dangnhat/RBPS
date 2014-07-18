@@ -55,6 +55,9 @@ namespace rbps_ns {
 	const uint8_t hold_measurement_length = 5;
 	const uint8_t prediction_rep_length = 21;
 
+	const uint8_t status_false = 0;
+	const uint8_t status_true = 1;
+
 	/* shared queue between main task and znp task */
 	extern OS_EventID main2znp_queue_id;
 	extern OS_EventID znp2main_queue_id;
