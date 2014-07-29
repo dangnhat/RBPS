@@ -152,13 +152,16 @@ public class MainActivity extends Activity {
         			Log.d("udtnode", "udt");
         			char[] patientId = parser.subCharArray(udtMsg, 7, 4);
             		int pID = parser.digitCharArray2Int(patientId);
-            		
-            		FRAME = parser.createDataFrame(detail_info, patientId);
-    				char[] result = sendReceiveFrame(FRAME);
-    				
-    				char[] nameArr = parser.subCharArray(result, 7, 20);
-    				String name = parser.concatNameArr2String(nameArr, nameLeng);
-    				
+            		if(chosenNodeId == nID)
+            			chosenPatientId = pID;
+            		String name = "";
+            		if(pID != 0) {
+	            		FRAME = parser.createDataFrame(detail_info, patientId);
+	    				char[] result = sendReceiveFrame(FRAME);
+	    				
+	    				char[] nameArr = parser.subCharArray(result, 7, 20);
+	    				name = parser.concatNameArr2String(nameArr, nameLeng);
+            		}
         			if(nInfo != null) {
         				Log.d("new node", "ok");
         				nInfo.setPatientId(pID);
@@ -212,8 +215,9 @@ public class MainActivity extends Activity {
 					backgroudCmd[maxSizeBuffer] = 1;
 					out.println(backgroudCmd);
 					try{
-			            char[] ret = new char[maxSizeBuffer];
+			            char[] ret;
 			            while(conn) {	//do while still connect.
+			            	ret = new char[maxSizeBuffer];
 			            	in.read(ret);
 		            		Message msg = handler.obtainMessage(updateMsg, (Object)ret);
 				            handler.sendMessage(msg);
@@ -463,17 +467,19 @@ public class MainActivity extends Activity {
 				/* Get nID and pId and put them to array destination */
 				nID = parser.subCharArray(scanNode, 4+i*(nidLeng+pidLeng), nidLeng);
 				pID = parser.subCharArray(scanNode, 4+nidLeng+i*(nidLeng+pidLeng), pidLeng);
-
+				int pIdInt = parser.digitCharArray2Int(pID);
 				parser.insData2Arr(scanReport, nID, 0);
 				parser.insData2Arr(scanReport, pID, nidLeng);
 				
-				/* Get patient's name of each node */
-				FRAME = parser.createDataFrame(detail_info, pID);
-				FRAME = sendReceiveFrame(FRAME);
-				
-				/* Get name and put it to an array destination */
-				char[] name = parser.subCharArray(FRAME, 7, nameLeng);
-				parser.insData2Arr(scanReport, name, nidLeng+pidLeng);
+				if(pIdInt != 0) {
+					/* Get patient's name of each node */
+					FRAME = parser.createDataFrame(detail_info, pID);
+					FRAME = sendReceiveFrame(FRAME);
+					
+					/* Get name and put it to an array destination */
+					char[] name = parser.subCharArray(FRAME, 7, nameLeng);
+					parser.insData2Arr(scanReport, name, nidLeng+pidLeng);
+				}
 				
 				/* Get scheduling information of each node */
 				FRAME = parser.createDataFrame(get_schedule, nID);
@@ -638,6 +644,7 @@ public class MainActivity extends Activity {
 			else
 				socketBackground.connect((new InetSocketAddress(newIP, SERVER_PORT)), 10000);
         }catch(Exception e) {
+        	e.printStackTrace();
         	notifyToast("Can not connect!", Toast.LENGTH_SHORT);
             return false;
         }
