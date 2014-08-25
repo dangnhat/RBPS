@@ -285,6 +285,13 @@ void* controller_thread_func(void *pdata) {
 	strcat(daily_patient_data, daily_patient_data_c);
 	printf("ctrl: daily_patient_data: %s\n", daily_patient_data);
 
+	/* test */
+//	cc_info.num_nodes = 1;
+//	cc_info.nodes_list[0].node_id = 1;
+//	cc_info.nodes_list[0].patient_id = 1;
+//	uint32_to_buffer(1, &mesg.mtext[3]);
+//	node_report_node_func(cc_info, mesg);
+
 	while (1) {
 		/* check data from zigbee thread */
 		ret_val = msgrcv(rbps_ns::zb2cc_mq_id, &mesg, rbps_ns::mtext_max_size, 0, IPC_NOWAIT);

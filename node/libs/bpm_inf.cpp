@@ -18,7 +18,7 @@
 #include "stm32f10x.h"
 
 /* Definitions */
-#define NewDevice
+//#define NewDevice
 
 #if BPM_INF_DEBUG
 #define BPM_INF_PRINTF(...) printf(__VA_ARGS__)
@@ -188,6 +188,7 @@ void bpm_inf::init_bpm_inf(void)
 
 uint8_t bpm_inf::measure_complete(void)
 {	uint8_t temp = 1;
+//	CoTimeDelay(0, 0, 1, 0);
 	temp = GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_2);
 	if (temp == 0)
 		return(0);
@@ -215,7 +216,7 @@ void bpm_inf::enter_pcl_mode(void)
 
 	this->press_menu(); // start PCL( old version need it).
 
-	CoTickDelay (0,0,0,50); // wait for PCL startup.
+	CoTimeDelay (0,0,0,50); // wait for PCL startup.
 #else
 
 	CoTimeDelay (0,0,2,0); // wait for PCL startup(New Device need more time).

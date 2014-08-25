@@ -64,7 +64,7 @@ namespace rbps_ns {
 	const uint8_t detail_info_length = 4;
 	const uint8_t detail_info_rep_length = 24;
 	const uint8_t measure_node_length = 4;
-	const uint8_t node_report_length = 17;
+	const uint8_t node_report_length = 23;
 	const uint8_t hold_measurement_length = 5;
 	const uint8_t prediction_rep_length = 21;
 

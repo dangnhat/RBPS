@@ -44,7 +44,7 @@ namespace rbpm_gui_ns {
 			"---- HCMUT ----\n"
 			"Patient's id:";
 	const uint8_t patient_id_pos[] = {2, 14};
-	const uint8_t check_mesg_pos[] = {3, 1};
+	const uint8_t check_mesg_pos[] = {1, 1};
 	const int8_t check_mesg[] = "Checking...";
 	const int8_t check_incorrect[] = "Incorrect";
 
@@ -81,7 +81,7 @@ namespace rbpm_gui_ns {
 
 	const int8_t remote_screen[] =
 			"-Remote monitoring-\n"
-			"\tMeasure in: %d'";
+			"\tMeasure in: %d s";
 	const uint8_t measure_time_pos[] = {2, 14};
 };
 

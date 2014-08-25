@@ -91,7 +91,7 @@ tu node khi do xong.
 * node_report (asynchronous command):
 /************************************************************************************************************************************/
 /*  1 (bytes)       |       2       |   4       |   4           |   4           |   4           |   6           |   1               */
-/*  leghth = 17     |   0x0017      |   node_id |   systolic    |   diastolic   |   heart rate  |   time stamp  |   need_predict    */
+/*  leghth = 23     |   0x0017      |   node_id |   systolic    |   diastolic   |   heart rate  |   time stamp  |   need_predict    */
 /************************************************************************************************************************************/
 
 node -> Coordinator: coordinator ghi lai ket qua vao kho du lieu, va dien them time_stamp

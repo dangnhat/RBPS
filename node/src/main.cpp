@@ -437,10 +437,10 @@ void Controller(void *pdata)
 							temp = (uint16_t) data_buff[2];
 							temp = ( temp <<8 )| data_buff[1];
 
-							a_gui.start_print_patient_id(1993);
-							CoTimeDelay(0,0,2,0);
-							 a_gui.start_print_patient_id(temp);
-							 CoTimeDelay(0,0,2,0);
+//							a_gui.start_print_patient_id(1993);
+//							CoTimeDelay(0,0,2,0);
+//							 a_gui.start_print_patient_id(temp);
+//							 CoTimeDelay(0,0,2,0);
 
 							if(temp == rbps_ns::measure_node_id )
 							{
@@ -705,14 +705,14 @@ void Controller(void *pdata)
 				time_counter = 5;
 
 
-#ifndef fake_measure
-				{
+//#ifndef fake_measure
+//				{
 					CoTimeDelay(0,0,1,0);
 					a_bpm.enter_pcl_mode();
 					a_bpm.get_measure_value();
 					a_bpm.exit_pcl_mode();
-				}
-#endif
+//				}
+//#endif
 
 			   a_gui.direct_print_default_screen((short int) a_bpm.get_sys_value(),
 					   (short int) a_bpm.get_dia_value(),
