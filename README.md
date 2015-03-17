@@ -3,7 +3,6 @@ RBPS
 
 Remote Blood Pressure and Heart Rate Monitoring System
 
-ABSTRACT
 Hypertension is called “silent killer” as it leads to many dangerous hypertensive diseases and
 heart failures without any significant symptoms over many years. In this project we will propose and
 design an idea of a system which can help people and doctor have a better way to check their and
